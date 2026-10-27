@@ -215,6 +215,9 @@ public:
     //ペアを配置
     void PutPair(const FallingPair& pair);
 
+    //1ブロック配置
+    void PutOne(int x, int y, BlockColor color);
+
     //浮いているブロックがあるか？
     bool HasFloatingBlocks() const;
 
@@ -230,6 +233,12 @@ public:
 
     void Print();
 };
+//1ブロック配置
+void Board::PutOne(int x, int y, BlockColor color)
+{
+    assert((x >= 0) && (x < WIDTH) && (y >= 0) && (y < HEIGHT));
+    mCells[y][x] = color;
+}
 
 //ペアを配置
 void Board::PutPair(const FallingPair& pair)
@@ -457,6 +466,7 @@ void Board::Print()
         }
         std::cout << "\n";
     }
+    std::cout << "\n";
 }
 
 
@@ -469,14 +479,60 @@ int main()
     FallingPair pair;
     pair.Reset();
     pair.SetPosition(2, 5);
-    pair.SetDirection(Direction::Right);
+    //pair.SetDirection(Direction::Right);
     pair.SetColor(0, BlockColor::Red);
     pair.SetColor(1, BlockColor::Blue);
 
-    if (board.CanPlace(pair))
-    {
-        board.PutPair(pair);
+    board.PutOne(2, 0, BlockColor::Red);
+    board.PutOne(2, 1, BlockColor::Red);
+    board.PutOne(2, 2, BlockColor::Red);
+    board.PutOne(2, 3, BlockColor::Red);
+    board.PutOne(2, 4, BlockColor::Red);
+
+    board.PutOne(3, 0, BlockColor::Blue);
+    board.PutOne(3, 1, BlockColor::Blue);
+    board.PutOne(3, 2, BlockColor::Blue);
+
+    board.Print();
+
+    while (true) {
+        FallingPair fp = pair;
+        fp.Move(0, -1);
+        if (board.CanPlace(fp)) {
+            pair = fp;
+        }
+        else {
+            break;
+        }
     }
+
+    board.PutPair(pair);
+
+    board.Print();
+
+    board.FindEraseBlocks();
+
+    board.EraseBlocks();
+
+    std::cout << "EraseBlocks\n";
+
+    board.Print();
+
+    while (true)
+    {
+        if (board.HasFloatingBlocks()) {
+            board.DropFloatingBlocks();
+        }
+        else {
+            break;
+        }
+        board.Print();
+    }
+
+    board.FindEraseBlocks();
+
+    board.EraseBlocks();
+
     board.Print();
 
     std::cout << board.CanPlace(pair) << '\n';

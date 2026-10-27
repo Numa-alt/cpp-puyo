@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug cpp_puyo Windows",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}\\build\\Debug\\cpp_puyo.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "build cpp_puyo",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug cpp_puyo Mac",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/cpp_puyo",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "build cpp_puyo",
+      "MIMode": "lldb",
+      "console": "integratedTerminal"
+    }
+  ]
+}
