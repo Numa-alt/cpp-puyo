@@ -13,14 +13,11 @@
     },
     {
       "name": "Debug cpp_puyo Mac",
-      "type": "cppdbg",
+      "type": "lldb",
       "request": "launch",
       "program": "${workspaceFolder}/build/cpp_puyo",
-      "args": [],
       "cwd": "${workspaceFolder}",
-      "preLaunchTask": "build cpp_puyo",
-      "MIMode": "lldb",
-      "console": "integratedTerminal"
+      "preLaunchTask": "build cpp_puyo"
     }
   ]
 }

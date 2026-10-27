@@ -5,10 +5,10 @@ project(cpp_puyo)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
+
 add_executable(cpp_puyo
     main.cpp
 )
 
-if (MSVC)
-    target_compile_options(cpp_puyo PRIVATE /utf-8)
-endif()
+target_link_libraries(cpp_puyo PRIVATE SDL2::SDL2)

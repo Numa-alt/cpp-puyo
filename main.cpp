@@ -1,6 +1,9 @@
 #include <iostream>
 #include <cassert>
 #include <array>
+#include <chrono>
+
+#include <SDL.h>
 
 #define BIT(x) (1 << (x))
 
@@ -67,11 +70,19 @@ private:
     unsigned int mRepeat = 0;
 
 public:
+    void SetPressed(unsigned int pressed)
+    {
+        mPressed = pressed;
+    }
     bool IsPressed(Button button) const
     {
         return (mPressed & static_cast<unsigned int>(button)) != 0;
     }
 
+    void SetRepeat(unsigned int repeat)
+    {
+        mRepeat = repeat;
+    }
     bool IsRepeat(Button button) const
     {
         return (mRepeat & static_cast<unsigned int>(button)) != 0;
@@ -461,6 +472,7 @@ void Board::Print()
             case BlockColor::Blue: c = 'b'; break;
             case BlockColor::Yellow: c = 'y'; break;
             case BlockColor::Green: c = 'g'; break;
+            case BlockColor::Empty: c = '.'; break;
             }
             std::cout << c;
         }
@@ -640,6 +652,8 @@ void PlayingManager::SetState(PlayState next)
             mChainCount++;
             break;
         }
+    case PlayState::Result:
+        break;
     }
 }
 
@@ -724,6 +738,8 @@ void PlayingManager::Control(const InputManager& input)
     {
         // 回転処理
         FallingPair pair = mFallingPair;
+
+        std::cout << "rotate!\n";
 
         // 90度
         pair.Rotate();
@@ -831,7 +847,7 @@ private:
     unsigned long mSystemTimeMs = 0;
 
 public:
-    void Execute();
+    void Execute(unsigned long systemTimeMs);
 
     //
     void SetState(GameState next);
@@ -842,6 +858,10 @@ public:
     void Playing(unsigned long systemTime);
     void GameOver();
     void GameClear();
+
+    void SetPressed(unsigned int pressed) {
+        mInputManager.SetPressed(pressed);
+    }
 };
 
 void GameManager::SetState(GameState next)
@@ -853,10 +873,10 @@ void GameManager::SetState(GameState next)
     mGameState = next;
 }
 
-void GameManager::Execute()
+void GameManager::Execute(unsigned long systemTimeMs)
 {
     //そのうち置き換え
-    mSystemTimeMs++;
+    mSystemTimeMs = systemTimeMs;
 
     switch (mGameState)
     {
@@ -928,16 +948,68 @@ void GameManager::GameClear()
 
 int main()
 {
+    if (SDL_Init(SDL_INIT_VIDEO) != 0)
+    {
+        std::cout << SDL_GetError() << '\n';
+        return 1;
+    }
+
+    SDL_Window* window = SDL_CreateWindow(
+        "cpp-puyo",
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        640,
+        480,
+        SDL_WINDOW_SHOWN
+    );
+    if (window == nullptr)
+    {
+        std::cout << "SDL_CreateWindow Error : " << SDL_GetError() << '\n';
+        SDL_Quit();
+        return 1;
+    }
+
     GameManager gameManager;
 
     gameManager.SetState(GameState::Playing);
 
+    auto startTime = std::chrono::steady_clock::now();
+
     while (true) {
-        gameManager.Execute();
+
+        unsigned int pressed = 0;
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+            {
+                return 0;
+            }
+            if (event.type == SDL_KEYDOWN && event.key.repeat == 0)
+            {
+                std::cout << "Pressed " << event.key.keysym.scancode << '\n';
+                if (event.key.keysym.scancode == SDL_SCANCODE_SPACE)
+                {
+                    pressed |= static_cast<unsigned int>(Button::Rotate);
+                }
+            }
+        }
+
+        gameManager.SetPressed(pressed);
+
+        auto now = std::chrono::steady_clock::now();
+
+        unsigned long systemTimeMs = static_cast<unsigned long>(std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count());
+
+        gameManager.Execute(systemTimeMs);
+
         if (gameManager.GetState() != GameState::Playing) {
             break;
         }
     }
+
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 
     return 0;
 
