@@ -81,41 +81,29 @@ private:
     unsigned int mReleased = 0;//離した瞬間１
     unsigned int mRepeat = 0;//リピート
 
-    std::array<unsigned long, static_cast<unsigned int>(Button::Max)> mSystemTimeMs;
-    std::array<unsigned int, static_cast<unsigned int>(Button::Max)> mRepeatCount;
+    std::array<unsigned long, static_cast<size_t>(Button::Max)> mSystemTimeMs;
+    std::array<unsigned int, static_cast<size_t>(Button::Max)> mRepeatCount;
 
 public:
 
     void Execute(unsigned long systemTimeMs, unsigned int held);
 
     // 押されている
-    void SetHeld(unsigned int held) {
-        mHeld = held;
-    }
     bool IsHeld(Button button)const {
         return (mHeld & ButtonBit(button)) != 0;
     }
 
     // 押された瞬間
-    void SetPressed(unsigned int pressed) {
-        mPressed = pressed;
-    }
     bool IsPressed(Button button) const {
         return (mPressed & ButtonBit(button)) != 0;
     }
 
     // 離された瞬間
-    void SetReleased(unsigned int released) {
-        mReleased = released;
-    }
-    bool IsReleased(Button button) {
+    bool IsReleased(Button button) const {
         return (mReleased & ButtonBit(button)) != 0;
     }
 
-    //リピート
-    void SetRepeat(unsigned int repeat) {
-        mRepeat = repeat;
-    }
+    // //リピート
     bool IsRepeat(Button button) const {
         return (mRepeat & ButtonBit(button)) != 0;
     }
@@ -125,6 +113,7 @@ void InputManager::Execute(unsigned long systemTimeMs, unsigned int held)
 {
     mPressed = 0;
     mRepeat = 0;
+    mReleased = 0;
 
     for (int i = 0; i < static_cast<int>(Button::Max); i++)
     {
@@ -149,6 +138,11 @@ void InputManager::Execute(unsigned long systemTimeMs, unsigned int held)
                 mRepeat |= f;
                 mSystemTimeMs[i] = systemTimeMs;
                 ++mRepeatCount[i];
+            }
+        }
+        else {
+            if (mHeld & f) {
+                mReleased |= f;
             }
         }
     }
@@ -921,17 +915,6 @@ public:
     void GameOver();
     void GameClear();
 
-    void SetHeld(unsigned int held)
-    {
-        mInputManager.SetHeld(held);
-    }
-    void SetPressed(unsigned int pressed) {
-        mInputManager.SetPressed(pressed);
-    }
-    void SetRepeat(unsigned int repeat) {
-        mInputManager.SetRepeat(repeat);
-    }
-
     const Board& GetBoard() const
     {
         return mPlayingManager.GetBoard();
@@ -1201,8 +1184,8 @@ int main(int argc, char* argv[])
 
     while (true) {
 
-        unsigned int pressed = 0;
-        unsigned int repeat = 0;
+        // unsigned int pressed = 0;
+        // unsigned int repeat = 0;
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
@@ -1213,15 +1196,6 @@ int main(int argc, char* argv[])
             if (!running) {
                 break;
             }
-            if (event.type == SDL_KEYDOWN && event.key.repeat == 0)
-            {
-                std::cout << "Pressed " << event.key.keysym.scancode << '\n';
-                if (event.key.keysym.scancode == SDL_SCANCODE_SPACE)
-                {
-                    pressed |= ButtonBit(Button::Rotate);
-                }
-            }
-
         }
 
         if (!running) {
@@ -1253,7 +1227,6 @@ int main(int argc, char* argv[])
         //FPS
         {
             std::ostringstream oss;
-            // oss << "FPS"<< std::uppercase << std::hex << frameCount;
             oss << "FPS " << frameCount;
             std::string str = oss.str();
             DrawString(renderer, 160, 2, str, 1, 0xFFFFFF, false);
@@ -1265,10 +1238,6 @@ int main(int argc, char* argv[])
             std::string str = oss.str();
             DrawString(renderer, 160, 10, str, 1, 0xFFFFFF, false);
         }
-
-        // gameManager.SetHeld(held);
-        // gameManager.SetPressed(pressed);
-        // gameManager.SetRepeat(repeat);
 
         auto now = std::chrono::steady_clock::now();
 
