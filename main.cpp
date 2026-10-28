@@ -969,6 +969,15 @@ int main()
         return 1;
     }
 
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (renderer == nullptr)
+    {
+        std::cout << SDL_GetError() << '\n';
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+
     GameManager gameManager;
 
     gameManager.SetState(GameState::Playing);
@@ -1002,12 +1011,22 @@ int main()
         unsigned long systemTimeMs = static_cast<unsigned long>(std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count());
 
         gameManager.Execute(systemTimeMs);
+        {
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderClear(renderer);
+        }
+        SDL_Rect rect{
+            100,200,30,30
+        };
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        SDL_RenderFillRect(renderer, &rect);
+        SDL_RenderPresent(renderer);
 
         if (gameManager.GetState() != GameState::Playing) {
             break;
         }
     }
-
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
 
