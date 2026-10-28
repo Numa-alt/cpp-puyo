@@ -15,6 +15,10 @@
 static constexpr int HEIGHT = 12;
 static constexpr int WIDTH = 6;
 
+static const int FONT_SIZE = 8;
+static const int WINDOW_WIDTH = 320;
+static const int WINDOW_HEIGHT = 240;
+
 enum class GameState
 {
     Title,     // タイトル画面
@@ -301,6 +305,8 @@ public:
     bool FindEraseBlocks();
     void SearchConnectedBlocks(int x, int y, BlockColor color, EraseFlags& checkedFlags, EraseFlags& connectedFlags, int& count);
 
+    int SumEraseBlocks()const;
+
     //mEraseFlagsに従ってブロックを消す
     void EraseBlocks();
 
@@ -526,6 +532,19 @@ void Board::EraseBlocks()
     }
 }
 
+int Board::SumEraseBlocks()const
+{
+    int count = 0;
+    for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            if (mEraseFlags.IsOn(x, y)) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
 void Board::Print()
 {
     for (int y = HEIGHT - 1; y >= 0; y--) {
@@ -553,7 +572,10 @@ private:
     Board mBoard;
     PlayState mState = PlayState::Spawn;
     int mChainCount = 0;
+    int mScore = 0;
     GameResult mGameResult = GameResult::Playing;
+
+    unsigned long mRandomSeed = 0;
 
     //この時間経過すると操作中のブロックが１マス下に落ちる(ミリ秒)
     unsigned long mAutoFallIntervalMs = 0;
@@ -578,6 +600,8 @@ private:
 public:
     void Start()
     {
+
+        mScore = 0;
         mChainCount = 0;
         mGameResult = GameResult::Playing;
         mBoard.Reset();
@@ -599,6 +623,20 @@ public:
         GenerateNextPair();
 
         SetState(PlayState::Spawn);
+    }
+
+    int GetChainCount() const { return mChainCount; }
+    int GetScore()const { return mScore; }
+
+    void SetRandomSeed(unsigned int randomSeed)
+    {
+        mRandomSeed = randomSeed;
+    }
+
+    unsigned int GenerateRandom()
+    {
+        mRandomSeed = mRandomSeed * 23 + 1;
+        return static_cast<unsigned int>(mRandomSeed >> 8);
     }
 
     void GenerateNextPair();
@@ -623,11 +661,15 @@ public:
     //前回の落下から一定時間経過したか？
     bool IsAutoFallDue() const;
 
+    BlockColor GenerateBlock();
+
     const FallingPair& GetFallingPair() const { return mFallingPair; }
     const FallingPair& GetNextPair() const { return mNextPair; }
     const Board& GetBoard()const { return mBoard; }
 
     PlayState GetState()const { return mState; }
+
+    unsigned long GetRandomSeed()const { return mRandomSeed; }
 };
 
 //落下時間計測のタイマーをリセット
@@ -645,28 +687,37 @@ bool PlayingManager::IsAutoFallDue() const
     }
     return false;
 }
-
+BlockColor PlayingManager::GenerateBlock()
+{
+    // ランダムに色を設定する
+    switch (GenerateRandom() % 4) {
+    case 0: return BlockColor::Red;
+    case 1: return BlockColor::Blue;
+    case 2: return BlockColor::Green;
+    case 3: return BlockColor::Yellow;
+    }
+    return BlockColor::Red;
+}
 void PlayingManager::GenerateNextPair()
 {
     // 出現位置
     mNextPair.SetPosition(2, HEIGHT - 2);
-    // ランダムに色を設定する
-    mNextPair.SetColor(0, BlockColor::Blue);
-    mNextPair.SetColor(1, BlockColor::Red);
+    mNextPair.SetColor(0, GenerateBlock());
+    mNextPair.SetColor(1, GenerateBlock());
 }
 
 // ステータス変更時に行う処理
 void PlayingManager::SetState(PlayState next)
 {
 
-    switch (next) {
-    case PlayState::Control: std::cout << "Control\n"; break;
-    case PlayState::DropBlocks: std::cout << "DropBlocks\n";break;
-    case PlayState::Erase: std::cout << "Erase\n";break;
-    case PlayState::EraseCheck:std::cout << "EraseCheck\n";break;
-    case PlayState::Result: std::cout << "Result\n"; break;
-    case PlayState::Spawn: std::cout << "Spawn\n";break;
-    }
+    // switch (next) {
+    // case PlayState::Control: std::cout << "Control\n"; break;
+    // case PlayState::DropBlocks: std::cout << "DropBlocks\n";break;
+    // case PlayState::Erase: std::cout << "Erase\n";break;
+    // case PlayState::EraseCheck:std::cout << "EraseCheck\n";break;
+    // case PlayState::Result: std::cout << "Result\n"; break;
+    // case PlayState::Spawn: std::cout << "Spawn\n";break;
+    // }
 
     // mBoard.Print();
 
@@ -801,7 +852,7 @@ void PlayingManager::Control(const InputManager& input)
         // 回転処理
         FallingPair pair = mFallingPair;
 
-        std::cout << "rotate!\n";
+        // std::cout << "rotate!\n";
 
         // 90度
         pair.Rotate();
@@ -854,8 +905,12 @@ void PlayingManager::EraseCheck() {
 // ブロックを消去
 void PlayingManager::Erase()
 {
-    if ((mSystemTimeMs - mEraseStartTimeMs) >= 500) // 消去処理終了？
+    if ((mSystemTimeMs - mEraseStartTimeMs) >= 300) // 消去処理終了？
     {
+        //スコア計算
+        int eraseBlockCount = mBoard.SumEraseBlocks();
+        mScore += eraseBlockCount * (mChainCount + 1);
+
         //ブロックを消す
         mBoard.EraseBlocks();
 
@@ -930,6 +985,16 @@ public:
     }
 
     PlayState GetPlayState()const { return mPlayingManager.GetState(); }
+
+    void SetRandomSeed(unsigned long randomSeed)
+    {
+        mPlayingManager.SetRandomSeed(randomSeed);
+    }
+
+    unsigned long GetRandomSeed()const { return mPlayingManager.GetRandomSeed(); }
+
+    int GetChainCount() const { return mPlayingManager.GetChainCount(); }
+    int GetScore() const { return mPlayingManager.GetScore(); }
 };
 
 void GameManager::SetState(GameState next)
@@ -1037,9 +1102,12 @@ void DrawChar(SDL_Renderer* renderer, int x, int y, char c, int scale, unsigned 
 }
 void DrawString(SDL_Renderer* renderer, int x, int y, const std::string& str, int scale, unsigned int color, bool shadow)
 {
-    std::ostringstream oss;
-    oss << std::uppercase << str;
-    std::string strUpper = oss.str();
+    std::string strUpper = str;
+    for (char& c : strUpper) {
+        if (c >= 'a' && c <= 'z') {
+            c = c - 'a' + 'A';
+        }
+    }
 
     if (shadow) {
         for (int i = 0; i < strUpper.size(); i++) {
@@ -1115,7 +1183,24 @@ void ClearScreen(SDL_Renderer* renderer)
         SDL_RenderClear(renderer);
     }
 }
-void DrawScreen(SDL_Renderer* renderer, const GameManager& gameManager)
+
+void DrawTitle(SDL_Renderer* renderer, const GameManager& gameManager)
+{
+    {
+        std::string str = "PUYO";
+        int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
+        int y = WINDOW_HEIGHT / 2 - FONT_SIZE / 2;
+        DrawString(renderer, x, y, str, 1, 0xFFFFFF, false);
+    }
+
+    {
+        std::string str = "PRESS SPACE";
+        int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
+        int y = WINDOW_HEIGHT / 2 + FONT_SIZE / 2 * 3;
+        DrawString(renderer, x, y, str, 1, 0xFFFFFF, false);
+    }
+}
+void DrawPlaying(SDL_Renderer* renderer, const GameManager& gameManager)
 {
     //盤面
     DrawBoard(renderer, gameManager.GetBoard());
@@ -1132,6 +1217,82 @@ void DrawScreen(SDL_Renderer* renderer, const GameManager& gameManager)
         FallingPair pair = gameManager.GetNextPair();
         DrawBlock(renderer, WIDTH + 1, HEIGHT + 0, pair.GetColor(0));
         DrawBlock(renderer, WIDTH + 1, HEIGHT - 1, pair.GetColor(1));
+    }
+
+    //スコア
+    {
+
+        int x = 8;
+        int y = 2;
+        DrawString(renderer, x, y, "SCORE", 1, 0xFFFFFF, false);
+
+        int score = gameManager.GetScore();
+        std::string str = std::to_string(score);
+        DrawString(renderer, x, y + FONT_SIZE, str, 1, 0xFFFFFF, false);
+    }
+
+
+    //連鎖数
+    {
+        int chainCount = gameManager.GetChainCount();
+
+        std::string str = "CHAIN COUNT " + std::to_string(chainCount);
+        int x = 112;
+        int y = 60;
+        DrawString(renderer, x, y, str, 1, 0xFFFFFF, false);
+    }
+
+}
+void DrawGameOver(SDL_Renderer* renderer, const GameManager& gameManager)
+{
+    {
+        std::string str = "GAME OVER";
+        int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
+        int y = WINDOW_HEIGHT / 2 - FONT_SIZE / 2;
+        DrawString(renderer, x, y, str, 1, 0xFFFFFF, false);
+
+    }
+    {
+        std::string str = "PRESS SPACE";
+        int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
+        int y = WINDOW_HEIGHT / 2 + FONT_SIZE / 2 * 3;
+        DrawString(renderer, x, y, str, 1, 0xFFFFFF, false);
+
+    }
+
+}
+void DrawClear(SDL_Renderer* renderer, const GameManager& gameManager)
+{
+    std::string str = "CLEAR";
+    int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
+    int y = WINDOW_HEIGHT / 2 - FONT_SIZE / 2;
+    DrawString(renderer, x, y, str, 1, 0xFFFFFF, false);
+
+}
+
+void DrawScreen(SDL_Renderer* renderer, const GameManager& gameManager)
+{
+    switch (gameManager.GetState()) {
+    case GameState::Title:
+        {
+            DrawTitle(renderer, gameManager);
+            break;
+        }
+    case GameState::Playing:
+        {
+            DrawPlaying(renderer, gameManager);
+            break;
+        }
+    case GameState::GameOver:
+        {
+            DrawGameOver(renderer, gameManager);
+            break;
+        }
+    case GameState::GameClear:
+        {
+            DrawClear(renderer, gameManager);
+            break;
+        }
     }
 
     SDL_RenderPresent(renderer);
@@ -1172,9 +1333,15 @@ int main(int argc, char* argv[])
 
     GameManager gameManager;
 
-    gameManager.SetState(GameState::Playing);
-
     auto startTime = std::chrono::steady_clock::now();
+    {
+        auto now = std::chrono::steady_clock::now();
+
+        unsigned long randomSeed = static_cast<unsigned long>(now.time_since_epoch().count());
+        gameManager.SetRandomSeed(randomSeed);
+    }
+
+    gameManager.SetState(GameState::Title);
 
     bool running = true;
 
@@ -1193,6 +1360,7 @@ int main(int argc, char* argv[])
             {
                 running = false;
             }
+
             if (!running) {
                 break;
             }
@@ -1239,6 +1407,14 @@ int main(int argc, char* argv[])
             DrawString(renderer, 160, 10, str, 1, 0xFFFFFF, false);
         }
 
+        // {
+        //     unsigned long randomSeed = gameManager.GetRandomSeed();
+        //     std::ostringstream oss;
+        //     oss << "RandomSeed " << randomSeed;
+        //     std::string str = oss.str();
+        //     DrawString(renderer, 160, 18, str, 1, 0xFF00FF, false);
+        // }
+
         auto now = std::chrono::steady_clock::now();
 
         unsigned long systemTimeMs = static_cast<unsigned long>(std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count());
@@ -1251,15 +1427,9 @@ int main(int argc, char* argv[])
 
         count++;
 
-
         gameManager.Execute(systemTimeMs, held);
 
         DrawScreen(renderer, gameManager);
-
-        if (gameManager.GetState() != GameState::Playing) {
-            break;
-        }
-
     }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
