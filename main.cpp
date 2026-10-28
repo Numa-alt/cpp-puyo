@@ -1,7 +1,9 @@
 #include <iostream>
+#include <sstream>
 #include <cassert>
 #include <array>
 #include <chrono>
+#include <iomanip>
 
 #include <SDL.h>
 
@@ -56,40 +58,104 @@ enum class Direction
     Left,
 };
 
+//ボタン番号
 enum class Button
 {
-    Rotate = BIT(0),
-    Left = BIT(1),
-    Right = BIT(2),
-    Down = BIT(3),
+    Rotate = 0,
+    Left,
+    Right,
+    Down,
+    Max
 };
+//ボタン番号をビットに変換
+unsigned int ButtonBit(Button button)
+{
+    return 1u << static_cast<unsigned int>(button);
+}
 
 class InputManager
 {
 private:
-    unsigned int mPressed = 0;
-    unsigned int mReleased = 0;
-    unsigned int mRepeat = 0;
+    unsigned int mHeld = 0;//押されている間１
+    unsigned int mPressed = 0;//押された瞬間１
+    unsigned int mReleased = 0;//離した瞬間１
+    unsigned int mRepeat = 0;//リピート
+
+    std::array<unsigned long, static_cast<unsigned int>(Button::Max)> mSystemTimeMs;
+    std::array<unsigned int, static_cast<unsigned int>(Button::Max)> mRepeatCount;
 
 public:
-    void SetPressed(unsigned int pressed)
-    {
-        mPressed = pressed;
+
+    void Execute(unsigned long systemTimeMs, unsigned int held);
+
+    // 押されている
+    void SetHeld(unsigned int held) {
+        mHeld = held;
     }
-    bool IsPressed(Button button) const
-    {
-        return (mPressed & static_cast<unsigned int>(button)) != 0;
+    bool IsHeld(Button button)const {
+        return (mHeld & ButtonBit(button)) != 0;
     }
 
-    void SetRepeat(unsigned int repeat)
-    {
+    // 押された瞬間
+    void SetPressed(unsigned int pressed) {
+        mPressed = pressed;
+    }
+    bool IsPressed(Button button) const {
+        return (mPressed & ButtonBit(button)) != 0;
+    }
+
+    // 離された瞬間
+    void SetReleased(unsigned int released) {
+        mReleased = released;
+    }
+    bool IsReleased(Button button) {
+        return (mReleased & ButtonBit(button)) != 0;
+    }
+
+    //リピート
+    void SetRepeat(unsigned int repeat) {
         mRepeat = repeat;
     }
-    bool IsRepeat(Button button) const
-    {
-        return (mRepeat & static_cast<unsigned int>(button)) != 0;
+    bool IsRepeat(Button button) const {
+        return (mRepeat & ButtonBit(button)) != 0;
     }
 };
+
+void InputManager::Execute(unsigned long systemTimeMs, unsigned int held)
+{
+    mPressed = 0;
+    mRepeat = 0;
+
+    for (int i = 0; i < static_cast<int>(Button::Max); i++)
+    {
+        Button b = static_cast<Button>(i);
+        unsigned int f = ButtonBit(b);
+        if (held & f) {
+            if (!(mHeld & f)) {
+                //前回おされてなくて、今回押されたとき
+                mPressed |= f;
+                mRepeat |= f;
+                //押され続ける時間を計測開始
+                mSystemTimeMs[i] = systemTimeMs;
+                mRepeatCount[i] = 0;
+            }
+            //リピート入力の初回だけ多めに待つ
+            unsigned long intervalTimeMs = 300;
+            if (mRepeatCount[i] > 0)
+            {
+                intervalTimeMs = 100;
+            }
+            if ((systemTimeMs - mSystemTimeMs[i]) >= intervalTimeMs) {
+                mRepeat |= f;
+                mSystemTimeMs[i] = systemTimeMs;
+                ++mRepeatCount[i];
+            }
+        }
+    }
+
+    mHeld = held;
+
+}
 
 // 操作中のブロック
 class FallingPair
@@ -564,6 +630,7 @@ public:
     bool IsAutoFallDue() const;
 
     const FallingPair& GetFallingPair() const { return mFallingPair; }
+    const FallingPair& GetNextPair() const { return mNextPair; }
     const Board& GetBoard()const { return mBoard; }
 
     PlayState GetState()const { return mState; }
@@ -711,39 +778,32 @@ void PlayingManager::Spawn()
 // 落下中のブロックの操作
 void PlayingManager::Control(const InputManager& input)
 {
-    if (input.IsRepeat(Button::Left))
-    {
+    if (input.IsRepeat(Button::Left)) {
         FallingPair pair = mFallingPair;
         pair.Move(-1, 0);
-        if (mBoard.CanPlace(pair)) // 左へ移動可能？
-        {
+        if (mBoard.CanPlace(pair)) { // 左へ移動可能？
             // 左へ移動
             mFallingPair = pair;
         }
     }
-    else if (input.IsRepeat(Button::Right))
-    {
+    else if (input.IsRepeat(Button::Right)) {
         FallingPair pair = mFallingPair;
         pair.Move(1, 0);
-        if (mBoard.CanPlace(pair)) // 右へ移動可能？
-        {
+        if (mBoard.CanPlace(pair)) { // 右へ移動可能？
             // 右へ移動
             mFallingPair = pair;
         }
     }
-    else if (input.IsRepeat(Button::Down))
-    {
+    else if (input.IsRepeat(Button::Down)) {
         FallingPair pair = mFallingPair;
         pair.Move(0, -1);
-        if (mBoard.CanPlace(pair))
-        {
+        if (mBoard.CanPlace(pair)) {//下へ移動可能？
             // 1段下へ移動
             mFallingPair = pair;
         }
     }
 
-    if (input.IsPressed(Button::Rotate))
-    {
+    if (input.IsPressed(Button::Rotate)) {
         // 回転処理
         FallingPair pair = mFallingPair;
 
@@ -751,12 +811,10 @@ void PlayingManager::Control(const InputManager& input)
 
         // 90度
         pair.Rotate();
-        if (mBoard.CanPlace(pair))
-        {
+        if (mBoard.CanPlace(pair)) {
             mFallingPair = pair;
         }
-        else
-        {
+        else {
             // 180度
             pair.Rotate();
             if (mBoard.CanPlace(pair))
@@ -767,13 +825,11 @@ void PlayingManager::Control(const InputManager& input)
     }
 
     //
-    if (IsAutoFallDue()) // 前回の落下から一定時間経過？
-    {
+    if (IsAutoFallDue()) { // 前回の落下から一定時間経過？
         // 1段落下
         FallingPair pair = mFallingPair;
         pair.Move(0, -1);
-        if (mBoard.CanPlace(pair))
-        {
+        if (mBoard.CanPlace(pair)) {
             mFallingPair = pair;
             //落下タイマーをリセット
             ResetAutoFallTimer();
@@ -789,15 +845,13 @@ void PlayingManager::Control(const InputManager& input)
 }
 
 // 消去チェック
-void PlayingManager::EraseCheck()
-{
+void PlayingManager::EraseCheck() {
+
     if ((mSystemTimeMs - mEraseCheckTimeMs) >= 500) {
-        if (mBoard.FindEraseBlocks()) // 消える？
-        {
+        if (mBoard.FindEraseBlocks()) {// 消える？
             SetState(PlayState::Erase);
         }
-        else
-        {
+        else {
             SetState(PlayState::Spawn);
         }
     }
@@ -825,7 +879,7 @@ void PlayingManager::Erase()
 // ブロック落下処理
 void PlayingManager::DropBlocks()
 {
-    if ((mSystemTimeMs - mDropStartTimeMs) >= 500) // 落下処理終了？
+    if ((mSystemTimeMs - mDropStartTimeMs) >= 200) // 落下処理終了？
     {
         mBoard.DropFloatingBlocks();
 
@@ -855,7 +909,7 @@ private:
     unsigned long mSystemTimeMs = 0;
 
 public:
-    void Execute(unsigned long systemTimeMs);
+    void Execute(unsigned long systemTimeMs, unsigned int held);
 
     //
     void SetState(GameState next);
@@ -867,6 +921,10 @@ public:
     void GameOver();
     void GameClear();
 
+    void SetHeld(unsigned int held)
+    {
+        mInputManager.SetHeld(held);
+    }
     void SetPressed(unsigned int pressed) {
         mInputManager.SetPressed(pressed);
     }
@@ -883,6 +941,10 @@ public:
     {
         return mPlayingManager.GetFallingPair();
     }
+    const FallingPair& GetNextPair() const
+    {
+        return mPlayingManager.GetNextPair();
+    }
 
     PlayState GetPlayState()const { return mPlayingManager.GetState(); }
 };
@@ -896,10 +958,11 @@ void GameManager::SetState(GameState next)
     mGameState = next;
 }
 
-void GameManager::Execute(unsigned long systemTimeMs)
+void GameManager::Execute(unsigned long systemTimeMs, unsigned int held)
 {
-    //そのうち置き換え
     mSystemTimeMs = systemTimeMs;
+
+    mInputManager.Execute(mSystemTimeMs, held);
 
     switch (mGameState)
     {
@@ -991,14 +1054,18 @@ void DrawChar(SDL_Renderer* renderer, int x, int y, char c, int scale, unsigned 
 }
 void DrawString(SDL_Renderer* renderer, int x, int y, const std::string& str, int scale, unsigned int color, bool shadow)
 {
+    std::ostringstream oss;
+    oss << std::uppercase << str;
+    std::string strUpper = oss.str();
+
     if (shadow) {
-        for (int i = 0; i < str.size(); i++) {
-            char c = str[i];
+        for (int i = 0; i < strUpper.size(); i++) {
+            char c = strUpper[i];
             DrawChar(renderer, x + scale * 8 * i + scale, y + scale, c, scale, 0x000000);
         }
     }
-    for (int i = 0; i < str.size(); i++) {
-        char c = str[i];
+    for (int i = 0; i < strUpper.size(); i++) {
+        char c = strUpper[i];
         DrawChar(renderer, x + scale * 8 * i, y, c, scale, color);
     }
 }
@@ -1057,14 +1124,16 @@ void DrawFallingPair(SDL_Renderer* renderer, const FallingPair& fallingPair)
     DrawBlock(renderer, ix, iy, pairBlockColor);
 }
 
-void Draw(SDL_Renderer* renderer, const GameManager& gameManager)
+void ClearScreen(SDL_Renderer* renderer)
 {
     //画面クリア
     {
         SDL_SetRenderDrawColor(renderer, 0, 0x20, 0, 255);
         SDL_RenderClear(renderer);
     }
-
+}
+void DrawScreen(SDL_Renderer* renderer, const GameManager& gameManager)
+{
     //盤面
     DrawBoard(renderer, gameManager.GetBoard());
 
@@ -1075,7 +1144,12 @@ void Draw(SDL_Renderer* renderer, const GameManager& gameManager)
     }
 
     //Next
-    DrawString(renderer, 160, 20, "NEXT", 1, 0xFFFFFF, true);
+    {
+        DrawString(renderer, 112, 10, "NEXT", 1, 0xFFFFFF, true);
+        FallingPair pair = gameManager.GetNextPair();
+        DrawBlock(renderer, WIDTH + 1, HEIGHT + 0, pair.GetColor(0));
+        DrawBlock(renderer, WIDTH + 1, HEIGHT - 1, pair.GetColor(1));
+    }
 
     SDL_RenderPresent(renderer);
 }
@@ -1121,6 +1195,10 @@ int main(int argc, char* argv[])
 
     bool running = true;
 
+    int frameCount = 0;
+    int count = 0;
+    unsigned int frameCountSystemTimeMs = 0;
+
     while (true) {
 
         unsigned int pressed = 0;
@@ -1140,38 +1218,74 @@ int main(int argc, char* argv[])
                 std::cout << "Pressed " << event.key.keysym.scancode << '\n';
                 if (event.key.keysym.scancode == SDL_SCANCODE_SPACE)
                 {
-                    pressed |= static_cast<unsigned int>(Button::Rotate);
+                    pressed |= ButtonBit(Button::Rotate);
                 }
             }
 
-            //今押されているか？
-            const Uint8* keyState = SDL_GetKeyboardState(nullptr);
-            if (keyState[SDL_SCANCODE_LEFT]) {
-                repeat |= static_cast<unsigned int>(Button::Left);
-            }
-            if (keyState[SDL_SCANCODE_RIGHT]) {
-                repeat |= static_cast<unsigned int>(Button::Right);
-            }
-            if (keyState[SDL_SCANCODE_DOWN]) {
-                repeat |= static_cast<unsigned int>(Button::Down);
-            }
-            // if ()
         }
 
         if (!running) {
             break;
         }
 
-        gameManager.SetPressed(pressed);
-        gameManager.SetRepeat(repeat);
+        //今押されているか？
+        unsigned int held = 0;
+        const Uint8* keyState = SDL_GetKeyboardState(nullptr);
+        if (keyState[SDL_SCANCODE_LEFT]) {
+            held |= ButtonBit(Button::Left);
+        }
+        if (keyState[SDL_SCANCODE_RIGHT]) {
+            held |= ButtonBit(Button::Right);
+        }
+        if (keyState[SDL_SCANCODE_DOWN]) {
+            held |= ButtonBit(Button::Down);
+        }
+        if (keyState[SDL_SCANCODE_SPACE]) {
+            held |= ButtonBit(Button::Rotate);
+        }
+
+        if (keyState[SDL_SCANCODE_ESCAPE]) {
+            break;
+        }
+
+        ClearScreen(renderer);
+
+        //FPS
+        {
+            std::ostringstream oss;
+            // oss << "FPS"<< std::uppercase << std::hex << frameCount;
+            oss << "FPS " << frameCount;
+            std::string str = oss.str();
+            DrawString(renderer, 160, 2, str, 1, 0xFFFFFF, false);
+        }
+
+        {
+            std::ostringstream oss;
+            oss << "KEY" << std::uppercase << std::hex << held;
+            std::string str = oss.str();
+            DrawString(renderer, 160, 10, str, 1, 0xFFFFFF, false);
+        }
+
+        // gameManager.SetHeld(held);
+        // gameManager.SetPressed(pressed);
+        // gameManager.SetRepeat(repeat);
 
         auto now = std::chrono::steady_clock::now();
 
         unsigned long systemTimeMs = static_cast<unsigned long>(std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count());
 
-        gameManager.Execute(systemTimeMs);
+        if ((systemTimeMs - frameCountSystemTimeMs) >= 1000) {
+            frameCount = count;
+            count = 0;
+            frameCountSystemTimeMs = systemTimeMs;
+        }
 
-        Draw(renderer, gameManager);
+        count++;
+
+
+        gameManager.Execute(systemTimeMs, held);
+
+        DrawScreen(renderer, gameManager);
 
         if (gameManager.GetState() != GameState::Playing) {
             break;
