@@ -5,6 +5,8 @@
 
 #include <SDL.h>
 
+#include "font8x8.h"
+
 #define BIT(x) (1 << (x))
 
 // 盤面のサイズ
@@ -243,6 +245,8 @@ public:
     void EraseBlocks();
 
     void Print();
+
+    BlockColor GetColor(int x, int y)const { return mCells[y][x]; }
 };
 //1ブロック配置
 void Board::PutOne(int x, int y, BlockColor color)
@@ -520,7 +524,7 @@ public:
         mFallingPair.Reset();
         mNextPair.Reset();
 
-        mAutoFallIntervalMs = 2000;//開始時は2000ミリ秒ごとに１マス落下。ブロックを消していくと徐々に少なくする
+        mAutoFallIntervalMs = 1000;//開始時は2000ミリ秒ごとに１マス落下。ブロックを消していくと徐々に少なくする
 
         mDropStartTimeMs = 0;
 
@@ -559,6 +563,10 @@ public:
     //前回の落下から一定時間経過したか？
     bool IsAutoFallDue() const;
 
+    const FallingPair& GetFallingPair() const { return mFallingPair; }
+    const Board& GetBoard()const { return mBoard; }
+
+    PlayState GetState()const { return mState; }
 };
 
 //落下時間計測のタイマーをリセット
@@ -599,7 +607,7 @@ void PlayingManager::SetState(PlayState next)
     case PlayState::Spawn: std::cout << "Spawn\n";break;
     }
 
-    mBoard.Print();
+    // mBoard.Print();
 
     mState = next;
 
@@ -862,6 +870,21 @@ public:
     void SetPressed(unsigned int pressed) {
         mInputManager.SetPressed(pressed);
     }
+    void SetRepeat(unsigned int repeat) {
+        mInputManager.SetRepeat(repeat);
+    }
+
+    const Board& GetBoard() const
+    {
+        return mPlayingManager.GetBoard();
+    }
+
+    const FallingPair& GetFallingPair() const
+    {
+        return mPlayingManager.GetFallingPair();
+    }
+
+    PlayState GetPlayState()const { return mPlayingManager.GetState(); }
 };
 
 void GameManager::SetState(GameState next)
@@ -945,6 +968,118 @@ void GameManager::GameClear()
     }
 }
 
+void DrawChar(SDL_Renderer* renderer, int x, int y, char c, int scale, unsigned int color)
+{
+    //char c = 'A';
+    if (c >= 0x20 && c <= 0x5F) {
+        const uint8_t* data = font8x8[c - 0x20];
+
+        SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, 255);
+        for (int ix = 0; ix < 8; ix++) {
+            int px = x + ix * scale;
+            for (int iy = 0; iy < 8; iy++) {
+                if (data[iy] & BIT(7 - ix)) {
+                    int py = y + iy * scale;
+                    SDL_Rect rect{
+                        px,py,scale,scale
+                    };
+                    SDL_RenderFillRect(renderer, &rect);
+                }
+            }
+        }
+    }
+}
+void DrawString(SDL_Renderer* renderer, int x, int y, const std::string& str, int scale, unsigned int color, bool shadow)
+{
+    if (shadow) {
+        for (int i = 0; i < str.size(); i++) {
+            char c = str[i];
+            DrawChar(renderer, x + scale * 8 * i + scale, y + scale, c, scale, 0x000000);
+        }
+    }
+    for (int i = 0; i < str.size(); i++) {
+        char c = str[i];
+        DrawChar(renderer, x + scale * 8 * i, y, c, scale, color);
+    }
+}
+
+void DrawBlock(SDL_Renderer* renderer, int ix, int iy, BlockColor blockColor)
+{
+    unsigned int color = 0x202020;
+    switch (blockColor) {
+    case BlockColor::Red: color = 0xFF0000; break;
+    case BlockColor::Blue: color = 0x0000FF; break;
+    case BlockColor::Green: color = 0x00FF00; break;
+    case BlockColor::Yellow: color = 0xFFFF00; break;
+    case BlockColor::Empty: color = 0x202020;break;
+    }
+
+    const int blockSize = 16;
+
+    const int offsetX = 8;
+    const int offsetY = 240 - 8 - blockSize;
+
+    int x = offsetX + blockSize * ix + 1;
+    int y = offsetY - blockSize * iy + 1;
+    SDL_Rect rect{
+        x,y,blockSize - 2,blockSize - 2
+    };
+    SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, 255);
+    SDL_RenderFillRect(renderer, &rect);
+}
+
+void DrawBoard(SDL_Renderer* renderer, const Board& board)
+{
+    for (int ix = 0; ix < WIDTH; ix++) {
+        for (int iy = 0; iy < HEIGHT; iy++) {
+            BlockColor blockColor = board.GetColor(ix, iy);
+            DrawBlock(renderer, ix, iy, blockColor);
+        }
+    }
+}
+void DrawFallingPair(SDL_Renderer* renderer, const FallingPair& fallingPair)
+{
+    int ix = fallingPair.GetX();
+    int iy = fallingPair.GetY();
+    BlockColor blockColor = fallingPair.GetColor(0);
+
+    DrawBlock(renderer, ix, iy, blockColor);
+
+    //相方
+    switch (fallingPair.GetDirection())
+    {
+    case Direction::Up: ++iy; break;
+    case Direction::Down: --iy; break;
+    case Direction::Left: --ix; break;
+    case Direction::Right: ++ix; break;
+    }
+    BlockColor pairBlockColor = fallingPair.GetColor(1);
+    DrawBlock(renderer, ix, iy, pairBlockColor);
+}
+
+void Draw(SDL_Renderer* renderer, const GameManager& gameManager)
+{
+    //画面クリア
+    {
+        SDL_SetRenderDrawColor(renderer, 0, 0x20, 0, 255);
+        SDL_RenderClear(renderer);
+    }
+
+    //盤面
+    DrawBoard(renderer, gameManager.GetBoard());
+
+    //操作中
+    if (gameManager.GetPlayState() == PlayState::Control)
+    {
+        DrawFallingPair(renderer, gameManager.GetFallingPair());
+    }
+
+    //Next
+    DrawString(renderer, 160, 20, "NEXT", 1, 0xFFFFFF, true);
+
+    SDL_RenderPresent(renderer);
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -984,15 +1119,21 @@ int main(int argc, char* argv[])
 
     auto startTime = std::chrono::steady_clock::now();
 
+    bool running = true;
+
     while (true) {
 
         unsigned int pressed = 0;
+        unsigned int repeat = 0;
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
             {
-                return 0;
+                running = false;
+            }
+            if (!running) {
+                break;
             }
             if (event.type == SDL_KEYDOWN && event.key.repeat == 0)
             {
@@ -1002,29 +1143,40 @@ int main(int argc, char* argv[])
                     pressed |= static_cast<unsigned int>(Button::Rotate);
                 }
             }
+
+            //今押されているか？
+            const Uint8* keyState = SDL_GetKeyboardState(nullptr);
+            if (keyState[SDL_SCANCODE_LEFT]) {
+                repeat |= static_cast<unsigned int>(Button::Left);
+            }
+            if (keyState[SDL_SCANCODE_RIGHT]) {
+                repeat |= static_cast<unsigned int>(Button::Right);
+            }
+            if (keyState[SDL_SCANCODE_DOWN]) {
+                repeat |= static_cast<unsigned int>(Button::Down);
+            }
+            // if ()
+        }
+
+        if (!running) {
+            break;
         }
 
         gameManager.SetPressed(pressed);
+        gameManager.SetRepeat(repeat);
 
         auto now = std::chrono::steady_clock::now();
 
         unsigned long systemTimeMs = static_cast<unsigned long>(std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count());
 
         gameManager.Execute(systemTimeMs);
-        {
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            SDL_RenderClear(renderer);
-        }
-        SDL_Rect rect{
-            100,200,30,30
-        };
-        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-        SDL_RenderFillRect(renderer, &rect);
-        SDL_RenderPresent(renderer);
+
+        Draw(renderer, gameManager);
 
         if (gameManager.GetState() != GameState::Playing) {
             break;
         }
+
     }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

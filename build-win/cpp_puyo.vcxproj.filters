@@ -4,6 +4,9 @@
     <ClCompile Include="C:\Users\Numashita\cpp-study\cpp-puyo\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\Numashita\cpp-study\cpp-puyo\font8x8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\Numashita\cpp-study\cpp-puyo\CMakeLists.txt" />

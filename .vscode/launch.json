@@ -5,7 +5,7 @@
       "name": "Debug cpp_puyo Windows",
       "type": "cppvsdbg",
       "request": "launch",
-      "program": "${workspaceFolder}\\build\\Debug\\cpp_puyo.exe",
+      "program": "${workspaceFolder}\\build-win\\Debug\\cpp_puyo.exe",
       "args": [],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "build cpp_puyo",

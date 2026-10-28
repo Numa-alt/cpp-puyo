@@ -7,7 +7,7 @@
       "command": "cmake",
       "args": [
         "--build",
-        "build"
+        "build-win"
       ],
       "group": {
         "kind": "build",
