@@ -11,4 +11,7 @@ add_executable(cpp_puyo
     main.cpp
 )
 
-target_link_libraries(cpp_puyo PRIVATE SDL2::SDL2)
+target_link_libraries(cpp_puyo PRIVATE
+    SDL2::SDL2main
+    SDL2::SDL2
+)
