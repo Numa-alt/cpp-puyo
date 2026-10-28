@@ -305,7 +305,7 @@ public:
     bool FindEraseBlocks();
     void SearchConnectedBlocks(int x, int y, BlockColor color, EraseFlags& checkedFlags, EraseFlags& connectedFlags, int& count);
 
-    int SumEraseBlocks()const;
+    int CountEraseBlocks()const;
 
     //mEraseFlagsに従ってブロックを消す
     void EraseBlocks();
@@ -532,7 +532,7 @@ void Board::EraseBlocks()
     }
 }
 
-int Board::SumEraseBlocks()const
+int Board::CountEraseBlocks()const
 {
     int count = 0;
     for (int y = 0; y < HEIGHT; y++) {
@@ -627,6 +627,7 @@ public:
 
     int GetChainCount() const { return mChainCount; }
     int GetScore()const { return mScore; }
+    int CalcScore()const;
 
     void SetRandomSeed(unsigned int randomSeed)
     {
@@ -709,18 +710,6 @@ void PlayingManager::GenerateNextPair()
 // ステータス変更時に行う処理
 void PlayingManager::SetState(PlayState next)
 {
-
-    // switch (next) {
-    // case PlayState::Control: std::cout << "Control\n"; break;
-    // case PlayState::DropBlocks: std::cout << "DropBlocks\n";break;
-    // case PlayState::Erase: std::cout << "Erase\n";break;
-    // case PlayState::EraseCheck:std::cout << "EraseCheck\n";break;
-    // case PlayState::Result: std::cout << "Result\n"; break;
-    // case PlayState::Spawn: std::cout << "Spawn\n";break;
-    // }
-
-    // mBoard.Print();
-
     mState = next;
 
     switch (next)
@@ -901,15 +890,17 @@ void PlayingManager::EraseCheck() {
         }
     }
 }
-
+int PlayingManager::CalcScore() const
+{
+    return mBoard.CountEraseBlocks() * mChainCount;
+}
 // ブロックを消去
 void PlayingManager::Erase()
 {
     if ((mSystemTimeMs - mEraseStartTimeMs) >= 300) // 消去処理終了？
     {
         //スコア計算
-        int eraseBlockCount = mBoard.SumEraseBlocks();
-        mScore += eraseBlockCount * (mChainCount + 1);
+        mScore += CalcScore();
 
         //ブロックを消す
         mBoard.EraseBlocks();
@@ -1078,6 +1069,42 @@ void GameManager::GameClear()
         SetState(GameState::Title);
     }
 }
+
+struct Effect {
+    unsigned long mLifeTimeMs;
+    std::function<void(unsigned long)> mExecute;
+    std::function<void()> mDraw;
+    Effect(
+        unsigned long lifeTimeMs,
+        std::function<void(unsigned long)> execute,
+        std::function<void(SDL_Renderer* renderer)>draw)
+        :
+        mLifeTimeMs(lifeTimeMs),
+        mExecute(execute),
+        mDraw(draw) {
+
+    }
+};
+
+class EffectManager {
+private:
+    std::vector<Effect> mEffects;
+
+public:
+    void Execute(unsigned long systemTimeMs)
+    {
+        for (auto& e : mEffects) {
+            e.mExecute(systemTimeMs);
+        }
+    }
+    void AddEffect(
+        unsigned long lifeTimeMs,
+        std::function<void(unsigned long)>execute,
+        std::function<void(SDL_Renderer* renderer)>draw)
+    {
+        mEffects.emplace_back(lifeTimeMs, execute, draw);
+    }
+};
 
 void DrawChar(SDL_Renderer* renderer, int x, int y, char c, int scale, unsigned int color)
 {
