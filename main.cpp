@@ -941,13 +941,15 @@ void PlayingManager::Control(const InputManager& input, GameEventManager& gameEv
             // 1段下へ移動
             mFallingPair = pair;
         }
+        else {
+            SetState(PlayState::DropBlocks, gameEventManager);
+            mBoard.PutPair(mFallingPair);
+        }
     }
 
     if (input.IsPressed(Button::Rotate)) {
         // 回転処理
         FallingPair pair = mFallingPair;
-
-        // std::cout << "rotate!\n";
 
         // 90度
         pair.Rotate();
@@ -1189,7 +1191,7 @@ public:
     Effect(unsigned long lifeTimeMs, unsigned long startTimeMs) :mLifeTimeMs(lifeTimeMs), mStartTimeMs(startTimeMs) {
 
     }
-    ~Effect() = default;
+    virtual ~Effect() = default;
 
     virtual void Execute(unsigned long) = 0;
     virtual void Draw(SDL_Renderer*) = 0;
@@ -1351,14 +1353,14 @@ void DrawTitle(SDL_Renderer* renderer, const GameManager& gameManager)
         std::string str = "PUYO";
         int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
         int y = WINDOW_HEIGHT / 2 - FONT_SIZE / 2;
-        DrawString(renderer, x, y, str, 1, 0xFFFFFF, false);
+        DrawString(renderer, x, y, str, 1, 0xFFFFFFFF, false);
     }
 
     {
         std::string str = "PRESS SPACE";
         int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
         int y = WINDOW_HEIGHT / 2 + FONT_SIZE / 2 * 3;
-        DrawString(renderer, x, y, str, 1, 0xFFFFFF, false);
+        DrawString(renderer, x, y, str, 1, 0xFFFFFFFF, false);
     }
 }
 void DrawPlaying(SDL_Renderer* renderer, const GameManager& gameManager)
@@ -1374,7 +1376,7 @@ void DrawPlaying(SDL_Renderer* renderer, const GameManager& gameManager)
 
     //Next
     {
-        DrawString(renderer, 112, 10, "NEXT", 1, 0xFFFFFF, true);
+        DrawString(renderer, 112, 10, "NEXT", 1, 0xFFFFFFFF, true);
         FallingPair pair = gameManager.GetNextPair();
         DrawBlock(renderer, WIDTH + 1, HEIGHT + 0, pair.GetColor(0), 0xFF);
         DrawBlock(renderer, WIDTH + 1, HEIGHT - 1, pair.GetColor(1), 0xFF);
@@ -1384,11 +1386,11 @@ void DrawPlaying(SDL_Renderer* renderer, const GameManager& gameManager)
     {
         int x = 8;
         int y = 2;
-        DrawString(renderer, x, y, "SCORE", 1, 0xFFFFFF, false);
+        DrawString(renderer, x, y, "SCORE", 1, 0xFFFFFFFF, false);
 
         int score = gameManager.GetScore();
         std::string str = std::to_string(score);
-        DrawString(renderer, x, y + FONT_SIZE, str, 1, 0xFFFFFF, false);
+        DrawString(renderer, x, y + FONT_SIZE, str, 1, 0xFFFFFFFF, false);
     }
 
 }
@@ -1398,14 +1400,14 @@ void DrawGameOver(SDL_Renderer* renderer, const GameManager& gameManager)
         std::string str = "GAME OVER";
         int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
         int y = WINDOW_HEIGHT / 2 - FONT_SIZE / 2;
-        DrawString(renderer, x, y, str, 1, 0xFFFFFF, false);
+        DrawString(renderer, x, y, str, 1, 0xFFFFFFFF, false);
 
     }
     {
         std::string str = "PRESS SPACE";
         int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
         int y = WINDOW_HEIGHT / 2 + FONT_SIZE / 2 * 3;
-        DrawString(renderer, x, y, str, 1, 0xFFFFFF, false);
+        DrawString(renderer, x, y, str, 1, 0xFFFFFFFF, false);
 
     }
 
@@ -1415,7 +1417,7 @@ void DrawClear(SDL_Renderer* renderer, const GameManager& gameManager)
     std::string str = "CLEAR";
     int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
     int y = WINDOW_HEIGHT / 2 - FONT_SIZE / 2;
-    DrawString(renderer, x, y, str, 1, 0xFFFFFF, false);
+    DrawString(renderer, x, y, str, 1, 0xFFFFFFFF, false);
 
 }
 
@@ -1576,6 +1578,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
     GameManager gameManager;
     EffectManager effectManager;
 
@@ -1641,7 +1645,7 @@ int main(int argc, char* argv[])
             std::ostringstream oss;
             oss << "FPS " << frameCount;
             std::string str = oss.str();
-            DrawString(renderer, 240, 2, str, 1, 0xFFFFFF, false);
+            DrawString(renderer, 240, 2, str, 1, 0xFFFFFFFF, false);
         }
 
         auto now = std::chrono::steady_clock::now();
