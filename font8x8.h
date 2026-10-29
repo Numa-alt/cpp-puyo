@@ -2,5 +2,5 @@
 
 #include <cstdint>
 
-extern const uint8_t font8x8[][8];
+extern const std::uint8_t font8x8[][8];
 

@@ -8,12 +8,15 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
+#include <cstdint>
+#include <memory>
+#include <string>
 
 #include <SDL.h>
 
 #include "font8x8.h"
 
-#define BIT(x) (1 << (x))
+#define BIT(x) (1u << (x))
 
 #define NUM_OF_ARRAY(x) ((sizeof(x)/sizeof((x)[0])))
 
@@ -28,6 +31,12 @@ static const int WINDOW_HEIGHT = 240;
 static const int BlockSize = 16;
 static const int BoardOffsetX = 8;
 static const int BoardOffsetY = 240 - 8 - BlockSize;
+
+static const std::uint32_t SpawnTimeMs = 300;
+static const std::uint32_t EraseCheckTimeMs = 10;
+static const std::uint32_t EraseTimeMs = 300;
+static const std::uint32_t DropTimeMs = 200;
+static const std::uint32_t InitialAutoFallIntervalMs = 1000;
 
 int CalcBoardX(int ix) { return BoardOffsetX + ix * BlockSize; }
 int CalcBoardY(int iy) { return BoardOffsetY - iy * BlockSize; }
@@ -86,25 +95,25 @@ enum class Button
     Max
 };
 //ボタン番号をビットに変換
-unsigned int ButtonBit(Button button)
+std::uint32_t ButtonBit(Button button)
 {
-    return 1u << static_cast<unsigned int>(button);
+    return 1u << static_cast<ustd::int32_t>(button);
 }
 
 class InputManager
 {
 private:
-    unsigned int mHeld = 0;//押されている間１
-    unsigned int mPressed = 0;//押された瞬間１
-    unsigned int mReleased = 0;//離した瞬間１
-    unsigned int mRepeat = 0;//リピート
+    std::uint32_t mHeld = 0;//押されている間１
+    std::uint32_t mPressed = 0;//押された瞬間１
+    std::uint32_t mReleased = 0;//離した瞬間１
+    std::uint32_t mRepeat = 0;//リピート
 
-    std::array<unsigned long, static_cast<size_t>(Button::Max)> mSystemTimeMs;
-    std::array<unsigned int, static_cast<size_t>(Button::Max)> mRepeatCount;
+    std::array<std::uint32_t, static_cast<size_t>(Button::Max)> mSystemTimeMs{};
+    std::array<std::uint32_t, static_cast<size_t>(Button::Max)> mRepeatCount{};
 
 public:
 
-    void Execute(unsigned long systemTimeMs, unsigned int held);
+    void Execute(std::uint32_t systemTimeMs, std::uint32_t held);
 
     // 押されている
     bool IsHeld(Button button)const {
@@ -127,16 +136,16 @@ public:
     }
 };
 
-void InputManager::Execute(unsigned long systemTimeMs, unsigned int held)
+void InputManager::Execute(std::uint32_t systemTimeMs, std::uint32_t held)
 {
     mPressed = 0;
     mRepeat = 0;
     mReleased = 0;
 
-    for (int i = 0; i < static_cast<int>(Button::Max); i++)
+    for (std::size_t i = 0; i < static_cast<std::size_t>(Button::Max); i++)
     {
         Button b = static_cast<Button>(i);
-        unsigned int f = ButtonBit(b);
+        std::uint32_t f = ButtonBit(b);
         if (held & f) {
             if (!(mHeld & f)) {
                 //前回おされてなくて、今回押されたとき
@@ -147,7 +156,7 @@ void InputManager::Execute(unsigned long systemTimeMs, unsigned int held)
                 mRepeatCount[i] = 0;
             }
             //リピート入力の初回だけ多めに待つ
-            unsigned long intervalTimeMs = 300;
+            std::uint32_t intervalTimeMs = 300;
             if (mRepeatCount[i] > 0)
             {
                 intervalTimeMs = 100;
@@ -205,12 +214,12 @@ public:
     {
         return mDirection;
     }
-    void SetColor(int index, BlockColor color)
+    void SetColor(std::size_t index, BlockColor color)
     {
-        assert((index >= 0) && (index < 2));
+        assert((index < 2));
         mColors[index] = color;
     }
-    BlockColor GetColor(int index) const
+    BlockColor GetColor(std::size_t index) const
     {
         return mColors[index];
     }
@@ -249,7 +258,7 @@ public:
 
 struct EraseFlags
 {
-    unsigned int mFlags[WIDTH];
+    std::uint32_t mFlags[WIDTH];
     void Init()
     {
         for (auto& f : mFlags)
@@ -276,7 +285,7 @@ class Board
 {
 private:
     // 左端を0 右端をWIDTH-1
-    // 一番上の段をHEGHT-1 一番下の段を0とする
+    // 一番上の段をHEIGHT-1 一番下の段を0とする
     BlockColor mCells[HEIGHT][WIDTH];
 
     //消えるブロックにフラグを立てる
@@ -331,7 +340,7 @@ public:
     //指定のブロックは消えるフラグが立っている？
     bool IsEraseBlock(int x, int y)const;
 
-    //真ん中あたりの消えるボロックの位置を取得する
+    //真ん中あたりの消えるブロックの位置を取得する
     void SearchCenterEraseBlock(int& x, int& y);
 };
 //1ブロック配置
@@ -456,7 +465,7 @@ bool Board::FindEraseBlocks()
 
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
-            if (mCells[y][x] != BlockColor::Empty) {
+            if ((mCells[y][x] != BlockColor::Empty) && !mEraseFlags.IsOn(x, y)) {
 
                 EraseFlags checkedFlags;
                 checkedFlags.Init();
@@ -480,6 +489,7 @@ bool Board::FindEraseBlocks()
                         }
                     }
                     hasErase = true;
+
                 }
             }
         }
@@ -491,7 +501,7 @@ bool Board::FindEraseBlocks()
 // 同じ色でつながっているブロックを
 // 再帰でたどって
 // 個数を数え
-// その位置を e に記録する
+// その位置を EraseFlags に記録する
 void Board::SearchConnectedBlocks(int x, int y, BlockColor color, EraseFlags& checkedFlags, EraseFlags& connectedFlags, int& count)
 {
     //上
@@ -563,13 +573,13 @@ void Board::SearchCenterEraseBlock(int& x, int& y)
     int maxX = 0;
     int minY = HEIGHT;
     int maxY = 0;
-    for (int y = 0; y < HEIGHT; y++) {
-        for (int x = 0; x < WIDTH; x++) {
-            if (mEraseFlags.IsOn(x, y)) {
-                if (x < minX) minX = x;
-                if (x > maxX) maxX = x;
-                if (y < minY) minY = y;
-                if (y > maxY) maxY = y;
+    for (int iy = 0; iy < HEIGHT; iy++) {
+        for (int ix = 0; ix < WIDTH; ix++) {
+            if (mEraseFlags.IsOn(ix, iy)) {
+                if (ix < minX) minX = ix;
+                if (ix > maxX) maxX = ix;
+                if (iy < minY) minY = iy;
+                if (iy > maxY) maxY = iy;
             }
         }
     }
@@ -656,32 +666,31 @@ private:
     int mScore = 0;
     GameResult mGameResult = GameResult::Playing;
 
-    unsigned long mRandomSeed = 0;
+    std::uint32_t mRandomSeed = 0;
 
     //この時間経過すると操作中のブロックが１マス下に落ちる(ミリ秒)
-    unsigned long mAutoFallIntervalMs = 0;
+    std::uint32_t mAutoFallIntervalMs = 0;
 
     //現在の時間を保持し、mAutoFallIntervalMs分時間が経過したらリセット(ミリ秒)
-    unsigned long mLastAutoFallTimeMs = 0;
+    std::uint32_t mLastAutoFallTimeMs = 0;
 
     //落下開始時の時間
-    unsigned long mDropStartTimeMs = 0;
+    std::uint32_t mDropStartTimeMs = 0;
 
-    unsigned long mSpawnTimeMs = 0;
-
-    //
-    unsigned long mEraseCheckTimeMs = 0;
+    std::uint32_t mSpawnTimeMs = 0;
 
     //
-    unsigned long mEraseStartTimeMs = 0;
+    std::uint32_t mEraseCheckTimeMs = 0;
 
     //
-    unsigned long mSystemTimeMs = 0;
+    std::uint32_t mEraseStartTimeMs = 0;
+
+    //
+    std::uint32_t mSystemTimeMs = 0;
 
 public:
-    void Start(GameEventManager& gameEventManager)
+    void Start(std::uint32_t systemTimeMs, GameEventManager& gameEventManager)
     {
-
         mScore = 0;
         mChainCount = 0;
         mGameResult = GameResult::Playing;
@@ -689,7 +698,7 @@ public:
         mFallingPair.Reset();
         mNextPair.Reset();
 
-        mAutoFallIntervalMs = 1000;//開始時は2000ミリ秒ごとに１マス落下。ブロックを消していくと徐々に少なくする
+        mAutoFallIntervalMs = InitialAutoFallIntervalMs;//開始時はInitialAutoFallIntervalMsミリ秒ごとに１マス落下。ブロックを消していくと徐々に少なくする
 
         mDropStartTimeMs = 0;
 
@@ -699,7 +708,7 @@ public:
 
         mSpawnTimeMs = 0;
 
-        mSystemTimeMs = 0;
+        mSystemTimeMs = systemTimeMs;
 
         GenerateNextPair();
 
@@ -710,23 +719,26 @@ public:
     int GetScore()const { return mScore; }
     int CalcScore()const;
 
-    void SetRandomSeed(unsigned int randomSeed)
+    void SetRandomSeed(std::uint32_t randomSeed)
     {
-        mRandomSeed = randomSeed;
+        mRandomSeed = (randomSeed != 0) ? randomSeed : 0xDEADBEEF;
     }
 
-    unsigned int GenerateRandom()
+    std::uint32_t GenerateRandom()
     {
-        mRandomSeed = mRandomSeed * 23 + 1;
-        return static_cast<unsigned int>(mRandomSeed >> 8);
+        mRandomSeed ^= mRandomSeed << 13;
+        mRandomSeed ^= mRandomSeed >> 17;
+        mRandomSeed ^= mRandomSeed << 5;
+        return static_cast<std::uint32_t>(mRandomSeed);
     }
 
     void GenerateNextPair();
 
     // ステータス変更時に行う処理
     void SetState(PlayState next, GameEventManager& gameEventManager);
+    PlayState GetState()const { return mState; }
 
-    void Execute(const InputManager& input, unsigned long systemTimerMs, GameEventManager& gameEventManager);
+    void Execute(const InputManager& input, std::uint32_t systemTimerMs, GameEventManager& gameEventManager);
 
     void Spawn(GameEventManager& gameEventManager);//新しいブロック出現
     void Control(const InputManager& input, GameEventManager& gameEventManager);
@@ -749,9 +761,7 @@ public:
     const FallingPair& GetNextPair() const { return mNextPair; }
     const Board& GetBoard()const { return mBoard; }
 
-    PlayState GetState()const { return mState; }
-
-    unsigned long GetRandomSeed()const { return mRandomSeed; }
+    std::uint32_t GetRandomSeed()const { return mRandomSeed; }
 };
 
 //落下時間計測のタイマーをリセット
@@ -872,7 +882,7 @@ void PlayingManager::SetState(PlayState next, GameEventManager& gameEventManager
     }
 }
 
-void PlayingManager::Execute(const InputManager& input, unsigned long systemTimeMs, GameEventManager& gameEventManager)
+void PlayingManager::Execute(const InputManager& input, std::uint32_t systemTimeMs, GameEventManager& gameEventManager)
 {
     mSystemTimeMs = systemTimeMs;
     switch (mState)
@@ -907,10 +917,11 @@ void PlayingManager::Execute(const InputManager& input, unsigned long systemTime
         break;
     }
 }
+
 // 新しいブロック出現
 void PlayingManager::Spawn(GameEventManager& gameEventManager)
 {
-    if ((mSystemTimeMs - mSpawnTimeMs) >= 500) // ブロック追加演出完了？
+    if ((mSystemTimeMs - mSpawnTimeMs) >= SpawnTimeMs) // ブロック追加演出完了？
     {
         SetState(PlayState::Control, gameEventManager);
     }
@@ -944,6 +955,7 @@ void PlayingManager::Control(const InputManager& input, GameEventManager& gameEv
         else {
             SetState(PlayState::DropBlocks, gameEventManager);
             mBoard.PutPair(mFallingPair);
+            return;
         }
     }
 
@@ -989,7 +1001,7 @@ void PlayingManager::Control(const InputManager& input, GameEventManager& gameEv
 // 消去チェック
 void PlayingManager::EraseCheck(GameEventManager& gameEventManager) {
 
-    if ((mSystemTimeMs - mEraseCheckTimeMs) >= 500) {
+    if ((mSystemTimeMs - mEraseCheckTimeMs) >= EraseCheckTimeMs) {
         if (mBoard.FindEraseBlocks()) {// 消える？
             SetState(PlayState::Erase, gameEventManager);
         }
@@ -1005,7 +1017,7 @@ int PlayingManager::CalcScore() const
 // ブロックを消去
 void PlayingManager::Erase(GameEventManager& gameEventManager)
 {
-    if ((mSystemTimeMs - mEraseStartTimeMs) >= 300) // 消去処理終了？
+    if ((mSystemTimeMs - mEraseStartTimeMs) >= EraseTimeMs) // 消去処理終了？
     {
         //スコア計算
         mScore += CalcScore();
@@ -1027,7 +1039,7 @@ void PlayingManager::Erase(GameEventManager& gameEventManager)
 // ブロック落下処理
 void PlayingManager::DropBlocks(GameEventManager& gameEventManager)
 {
-    if ((mSystemTimeMs - mDropStartTimeMs) >= 200) // 落下処理終了？
+    if ((mSystemTimeMs - mDropStartTimeMs) >= DropTimeMs) // 落下処理終了？
     {
         mBoard.DropFloatingBlocks();
 
@@ -1054,12 +1066,12 @@ private:
 
     PlayingManager mPlayingManager;
 
-    unsigned long mSystemTimeMs = 0;
+    std::uint32_t mSystemTimeMs = 0;
 
     GameEventManager mGameEventManager;
 
 public:
-    void Execute(unsigned long systemTimeMs, unsigned int held);
+    void Execute(std::uint32_t systemTimeMs, std::uint32_t held);
 
     //
     void SetState(GameState next);
@@ -1067,7 +1079,7 @@ public:
     GameState GetState()const { return mGameState; };
 
     void Title();
-    void Playing(unsigned long systemTime);
+    void Playing(std::uint32_t systemTime);
     void GameOver();
     void GameClear();
 
@@ -1087,30 +1099,31 @@ public:
 
     PlayState GetPlayState()const { return mPlayingManager.GetState(); }
 
-    void SetRandomSeed(unsigned long randomSeed)
+    void SetRandomSeed(std::uint32_t randomSeed)
     {
         mPlayingManager.SetRandomSeed(randomSeed);
     }
 
-    unsigned long GetRandomSeed()const { return mPlayingManager.GetRandomSeed(); }
+    std::uint32_t GetRandomSeed()const { return mPlayingManager.GetRandomSeed(); }
 
     int GetChainCount() const { return mPlayingManager.GetChainCount(); }
     int GetScore() const { return mPlayingManager.GetScore(); }
 
     bool IsGameEventEmpty()const { return mGameEventManager.IsEmpty(); }
     GameEvent PopGameEvent() { return mGameEventManager.Pop(); }
+
 };
 
 void GameManager::SetState(GameState next)
 {
     if (next == GameState::Playing)
     {
-        mPlayingManager.Start(mGameEventManager);
+        mPlayingManager.Start(mSystemTimeMs, mGameEventManager);
     }
     mGameState = next;
 }
 
-void GameManager::Execute(unsigned long systemTimeMs, unsigned int held)
+void GameManager::Execute(std::uint32_t systemTimeMs, std::uint32_t held)
 {
     mSystemTimeMs = systemTimeMs;
 
@@ -1145,7 +1158,7 @@ void GameManager::Title()
     }
 }
 // ゲーム中
-void GameManager::Playing(unsigned long systemTimeMs)
+void GameManager::Playing(std::uint32_t systemTimeMs)
 {
     mPlayingManager.Execute(mInputManager, systemTimeMs, mGameEventManager);
 
@@ -1185,21 +1198,21 @@ void GameManager::GameClear()
 
 class Effect {
 private:
-    unsigned long mLifeTimeMs = 0;
-    unsigned long mStartTimeMs = 0;
+    std::uint32_t mLifeTimeMs = 0;
+    std::uint32_t mStartTimeMs = 0;
 public:
-    Effect(unsigned long lifeTimeMs, unsigned long startTimeMs) :mLifeTimeMs(lifeTimeMs), mStartTimeMs(startTimeMs) {
+    Effect(std::uint32_t lifeTimeMs, std::uint32_t startTimeMs) :mLifeTimeMs(lifeTimeMs), mStartTimeMs(startTimeMs) {
 
     }
     virtual ~Effect() = default;
 
-    virtual void Execute(unsigned long) = 0;
+    virtual void Execute(std::uint32_t) = 0;
     virtual void Draw(SDL_Renderer*) = 0;
 
-    unsigned long GetLifeTimeMs()const { return mLifeTimeMs; }
-    unsigned long GetStartTimeMs()const { return mStartTimeMs; }
+    std::uint32_t GetLifeTimeMs()const { return mLifeTimeMs; }
+    std::uint32_t GetStartTimeMs()const { return mStartTimeMs; }
 
-    float CalcRate(unsigned long systemTimeMs) const {
+    float CalcRate(std::uint32_t systemTimeMs) const {
         float nowMs = static_cast<float>(systemTimeMs) - static_cast<float>(mStartTimeMs);
         float rate = nowMs / static_cast<float>(mLifeTimeMs);
         if (rate < 0.0f) {
@@ -1221,7 +1234,7 @@ public:
         mEffects.push_back(std::move(effect));
     }
 
-    void Execute(unsigned long systemTimeMs)
+    void Execute(std::uint32_t systemTimeMs)
     {
 
         for (auto& e : mEffects) {
@@ -1245,17 +1258,17 @@ public:
 };
 
 
-void DrawChar(SDL_Renderer* renderer, int x, int y, char c, int scale, unsigned int color)
+void DrawChar(SDL_Renderer* renderer, int x, int y, char c, int scale, std::uint32_t color)
 {
     //char c = 'A';
     if (c >= 0x20 && c <= 0x5F) {
-        const uint8_t* data = font8x8[c - 0x20];
+        const std::uint8_t* data = font8x8[c - 0x20];
 
         SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, (color >> 24) & 0xFF);
-        for (int ix = 0; ix < 8; ix++) {
+        for (int ix = 0; ix < FONT_SIZE; ix++) {
             int px = x + ix * scale;
-            for (int iy = 0; iy < 8; iy++) {
-                if (data[iy] & BIT(7 - ix)) {
+            for (int iy = 0; iy < FONT_SIZE; iy++) {
+                if (data[iy] & BIT((FONT_SIZE - 1) - ix)) {
                     int py = y + iy * scale;
                     SDL_Rect rect{
                         px,py,scale,scale
@@ -1266,8 +1279,9 @@ void DrawChar(SDL_Renderer* renderer, int x, int y, char c, int scale, unsigned 
         }
     }
 }
-void DrawString(SDL_Renderer* renderer, int x, int y, const std::string& str, int scale, unsigned int color, bool shadow)
+void DrawString(SDL_Renderer* renderer, int x, int y, const std::string& str, int scale, std::uint32_t color, bool shadow)
 {
+    //フォントデータは大文字しか用意していないので変換
     std::string strUpper = str;
     for (char& c : strUpper) {
         if (c >= 'a' && c <= 'z') {
@@ -1275,23 +1289,25 @@ void DrawString(SDL_Renderer* renderer, int x, int y, const std::string& str, in
         }
     }
 
-    unsigned int alpha = (color & 0xFF000000);
+    //影のためのアルファ
+    std::uint32_t alpha = (color & 0xFF000000);
 
     if (shadow) {
-        for (int i = 0; i < strUpper.size(); i++) {
+        for (std::size_t i = 0; i < strUpper.size(); i++) {
             char c = strUpper[i];
-            DrawChar(renderer, x + scale * 8 * i + scale, y + scale, c, scale, alpha | 0x00000000);
+            DrawChar(renderer, x + scale * 8 * static_cast<int>(i) + scale, y + scale, c, scale, alpha | 0x00000000);
         }
     }
-    for (int i = 0; i < strUpper.size(); i++) {
+
+    for (std::size_t i = 0; i < strUpper.size(); i++) {
         char c = strUpper[i];
-        DrawChar(renderer, x + scale * 8 * i, y, c, scale, color);
+        DrawChar(renderer, x + scale * 8 * static_cast<int>(i), y, c, scale, color);
     }
 }
 
-void DrawBlock(SDL_Renderer* renderer, int ix, int iy, BlockColor blockColor, int alpha)
+void DrawBlock(SDL_Renderer* renderer, int ix, int iy, BlockColor blockColor, std::uint32_t alpha)
 {
-    unsigned int color = 0x202020;
+    std::uint32_t color = 0x202020;
     switch (blockColor) {
     case BlockColor::Red: color = 0xFF0000; break;
     case BlockColor::Blue: color = 0x0000FF; break;
@@ -1305,7 +1321,7 @@ void DrawBlock(SDL_Renderer* renderer, int ix, int iy, BlockColor blockColor, in
     SDL_Rect rect{
         x,y,BlockSize - 2,BlockSize - 2
     };
-    SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, alpha);
+    SDL_SetRenderDrawColor(renderer, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF, static_cast<std::uint8_t>(alpha));
     SDL_RenderFillRect(renderer, &rect);
 }
 
@@ -1347,18 +1363,18 @@ void ClearScreen(SDL_Renderer* renderer)
     }
 }
 
-void DrawTitle(SDL_Renderer* renderer, const GameManager& gameManager)
+void DrawTitle(SDL_Renderer* renderer)
 {
     {
         std::string str = "PUYO";
-        int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
+        int x = WINDOW_WIDTH / 2 - FONT_SIZE * static_cast<int>(str.size()) / 2;
         int y = WINDOW_HEIGHT / 2 - FONT_SIZE / 2;
         DrawString(renderer, x, y, str, 1, 0xFFFFFFFF, false);
     }
 
     {
         std::string str = "PRESS SPACE";
-        int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
+        int x = WINDOW_WIDTH / 2 - FONT_SIZE * static_cast<int>(str.size()) / 2;
         int y = WINDOW_HEIGHT / 2 + FONT_SIZE / 2 * 3;
         DrawString(renderer, x, y, str, 1, 0xFFFFFFFF, false);
     }
@@ -1394,28 +1410,26 @@ void DrawPlaying(SDL_Renderer* renderer, const GameManager& gameManager)
     }
 
 }
-void DrawGameOver(SDL_Renderer* renderer, const GameManager& gameManager)
+void DrawGameOver(SDL_Renderer* renderer)
 {
     {
         std::string str = "GAME OVER";
-        int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
+        int x = WINDOW_WIDTH / 2 - FONT_SIZE * static_cast<int>(str.size()) / 2;
         int y = WINDOW_HEIGHT / 2 - FONT_SIZE / 2;
         DrawString(renderer, x, y, str, 1, 0xFFFFFFFF, false);
-
     }
     {
         std::string str = "PRESS SPACE";
-        int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
+        int x = WINDOW_WIDTH / 2 - FONT_SIZE * static_cast<int>(str.size()) / 2;
         int y = WINDOW_HEIGHT / 2 + FONT_SIZE / 2 * 3;
         DrawString(renderer, x, y, str, 1, 0xFFFFFFFF, false);
-
     }
 
 }
-void DrawClear(SDL_Renderer* renderer, const GameManager& gameManager)
+void DrawClear(SDL_Renderer* renderer)
 {
     std::string str = "CLEAR";
-    int x = WINDOW_WIDTH / 2 - FONT_SIZE * str.size() / 2;
+    int x = WINDOW_WIDTH / 2 - FONT_SIZE * static_cast<int>(str.size()) / 2;
     int y = WINDOW_HEIGHT / 2 - FONT_SIZE / 2;
     DrawString(renderer, x, y, str, 1, 0xFFFFFFFF, false);
 
@@ -1426,7 +1440,7 @@ void DrawScreen(SDL_Renderer* renderer, const GameManager& gameManager, const Ef
     switch (gameManager.GetState()) {
     case GameState::Title:
         {
-            DrawTitle(renderer, gameManager);
+            DrawTitle(renderer);
             break;
         }
     case GameState::Playing:
@@ -1436,12 +1450,12 @@ void DrawScreen(SDL_Renderer* renderer, const GameManager& gameManager, const Ef
         }
     case GameState::GameOver:
         {
-            DrawGameOver(renderer, gameManager);
+            DrawGameOver(renderer);
             break;
         }
     case GameState::GameClear:
         {
-            DrawClear(renderer, gameManager);
+            DrawClear(renderer);
             break;
         }
     }
@@ -1457,11 +1471,11 @@ private:
     int mX = 0;
     int mY = 0;
     BlockColor mBlockColor;
-    int mAlpha = 0;
-    unsigned int mColor = 0;
+    std::uint32_t mAlpha = 0;
+    std::uint32_t mColor = 0;
     int mSize = 0;
 public:
-    EffectBlockErase(int x, int y, BlockColor blockColor, unsigned long lifeTimeMs, unsigned long startTimeMs)
+    EffectBlockErase(int x, int y, BlockColor blockColor, std::uint32_t lifeTimeMs, std::uint32_t startTimeMs)
         :Effect(lifeTimeMs, startTimeMs), mX(x), mY(y), mBlockColor(blockColor)
     {
         mAlpha = 255;
@@ -1471,17 +1485,19 @@ public:
         case BlockColor::Blue: mColor = 0x0000FF; break;
         case BlockColor::Yellow: mColor = 0xFFFF00; break;
         case BlockColor::Green: mColor = 0x00FF00; break;
+        case BlockColor::Empty: mColor = 0x202020; break;
         }
     }
 
-    void Execute(unsigned long systemTimeMs) override {
+    void Execute(std::uint32_t systemTimeMs) override {
         float rate = CalcRate(systemTimeMs);
-        mAlpha = 255 - 255 * rate;
-        mSize = BlockSize - BlockSize * rate;
+        float alpha = 255.0f - 255.0f * rate;
+        mAlpha = static_cast<std::uint32_t>(alpha) & 0xFF;
+        mSize = BlockSize - static_cast<int>(static_cast<float>(BlockSize) * rate);
     }
     void Draw(SDL_Renderer* renderer) override
     {
-        SDL_SetRenderDrawColor(renderer, (mColor >> 16) & 0xFF, (mColor >> 8) & 0xFF, mColor & 0xFF, mAlpha);
+        SDL_SetRenderDrawColor(renderer, (mColor >> 16) & 0xFF, (mColor >> 8) & 0xFF, mColor & 0xFF, static_cast<std::uint8_t>(mAlpha));
         int x = mX - mSize / 2;
         int y = mY - mSize / 2;
         SDL_Rect rect{
@@ -1497,23 +1513,23 @@ private:
     int mX = 0;
     int mY = 0;
     int mOffsetY = 0;
-    int mAlpha = 255;
-    int mColor = 0xFFFFFF;
+    std::uint32_t mAlpha = 255;
+    std::uint32_t mColor = 0xFFFFFF;
     int mCount = 0;
     int mChainNum = 0;
 public:
-    EffectChain(int x, int y, unsigned long lifeTimeMs, unsigned long startTimeMs, int chainNum)
+    EffectChain(int x, int y, std::uint32_t lifeTimeMs, std::uint32_t startTimeMs, int chainNum)
         : Effect(lifeTimeMs, startTimeMs), mX(x), mY(y), mChainNum(chainNum) {
         mOffsetY = 0;
         mAlpha = 255;
         mColor = 0xFFFFFF;
         mCount = 0;
     }
-    void Execute(unsigned long systemTimeMs) override {
+    void Execute(std::uint32_t systemTimeMs) override {
         float rate = CalcRate(systemTimeMs);
-        mAlpha = 255 - 255 * rate;
-        mOffsetY = 32 - 32 * rate;
-        static const unsigned int colorTbl[] = {
+        mAlpha = static_cast<std::uint32_t>(255 - 255 * rate) & 0xFF;
+        mOffsetY = static_cast<int>(32 - 32 * rate);
+        static const std::uint32_t colorTbl[] = {
                 0xFF0000,
                 0xFFFF00,
                 0xFFFFFF,
@@ -1542,7 +1558,7 @@ public:
     }
     void Draw(SDL_Renderer* renderer) override {
         std::string str = std::to_string(mChainNum) + " CHAIN";
-        DrawString(renderer, mX, mY + mOffsetY, str, 1, (mAlpha << 24) | mColor, false);
+        DrawString(renderer, mX, mY + mOffsetY, str, 1, ((mAlpha & 0xFF) << 24) | mColor, false);
     }
 };
 
@@ -1569,7 +1585,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (renderer == nullptr)
     {
         std::cout << SDL_GetError() << '\n';
@@ -1587,7 +1603,7 @@ int main(int argc, char* argv[])
     {
         auto now = std::chrono::steady_clock::now();
 
-        unsigned long randomSeed = static_cast<unsigned long>(now.time_since_epoch().count());
+        std::uint32_t randomSeed = static_cast<std::uint32_t>(now.time_since_epoch().count());
         gameManager.SetRandomSeed(randomSeed);
     }
 
@@ -1597,7 +1613,7 @@ int main(int argc, char* argv[])
 
     int frameCount = 0;
     int count = 0;
-    unsigned int frameCountSystemTimeMs = 0;
+    std::uint32_t frameCountSystemTimeMs = 0;
 
     while (true) {
 
@@ -1619,7 +1635,7 @@ int main(int argc, char* argv[])
         }
 
         //今押されているか？
-        unsigned int held = 0;
+        std::uint32_t held = 0;
         const Uint8* keyState = SDL_GetKeyboardState(nullptr);
         if (keyState[SDL_SCANCODE_LEFT]) {
             held |= ButtonBit(Button::Left);
@@ -1648,9 +1664,23 @@ int main(int argc, char* argv[])
             DrawString(renderer, 240, 2, str, 1, 0xFFFFFFFF, false);
         }
 
+        {
+            PlayState state = gameManager.GetPlayState();
+            std::string str;
+            switch (state) {
+            case PlayState::Control: str += "Control";break;
+            case PlayState::DropBlocks: str += "DropBlocks";break;
+            case PlayState::Erase: str += "Erase";break;
+            case PlayState::EraseCheck: str += "EraseCheck";break;
+            case PlayState::Result: str += "Result";break;
+            case PlayState::Spawn: str += "Spawn";break;
+            }
+            DrawString(renderer, 80, 2, str, 1, 0xFFFFFFFF, false);
+        }
+
         auto now = std::chrono::steady_clock::now();
 
-        unsigned long systemTimeMs = static_cast<unsigned long>(std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count());
+        std::uint32_t systemTimeMs = static_cast<std::uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count());
 
         if ((systemTimeMs - frameCountSystemTimeMs) >= 1000) {
             frameCount = count;

@@ -12,6 +12,8 @@ add_executable(cpp_puyo
     font8x8.cpp
 )
 
+target_compile_options(cpp_puyo PRIVATE -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow)
+
 target_link_libraries(cpp_puyo PRIVATE
     SDL2::SDL2main
     SDL2::SDL2
