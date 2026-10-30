@@ -3,10 +3,8 @@
 #include <cassert>
 #include <array>
 #include <chrono>
-#include <iomanip>
 #include <functional>
 #include <vector>
-#include <queue>
 #include <algorithm>
 #include <cstdint>
 #include <memory>
@@ -17,8 +15,7 @@
 #include "font8x8.h"
 
 #define BIT(x) (1u << (x))
-
-#define NUM_OF_ARRAY(x) ((sizeof(x)/sizeof((x)[0])))
+// #define NUM_OF_ARRAY(x) (sizeof(x)/sizeof(x[0]))
 
 // 盤面のサイズ
 static constexpr int HEIGHT = 12;
@@ -32,11 +29,21 @@ static const int BlockSize = 16;
 static const int BoardOffsetX = 8;
 static const int BoardOffsetY = 240 - 8 - BlockSize;
 
-static const std::uint32_t SpawnTimeMs = 300;
+static const std::uint32_t SpawnDelayMs = 300;
 static const std::uint32_t EraseCheckTimeMs = 10;
-static const std::uint32_t EraseTimeMs = 300;
+static const std::uint32_t EraseDurationMs = 300;
 static const std::uint32_t DropTimeMs = 200;
 static const std::uint32_t InitialAutoFallIntervalMs = 1000;
+
+static const std::uint32_t ChainEffectDispTimeMs = 1500;
+static const std::uint32_t BlockEraseEffectTimeMs = 1500;
+
+//この個数を消すごとに落下速度が早くなる
+static const std::uint32_t EraseCountForSpeedUp = 4;
+//どのくらい早くなるか
+static const std::uint32_t AutoFallDecreaseMs = 50;
+//落下速度はここまで減る
+static const std::uint32_t MinAutoFallIntervalMs = 100;
 
 int CalcBoardX(int ix) { return BoardOffsetX + ix * BlockSize; }
 int CalcBoardY(int iy) { return BoardOffsetY - iy * BlockSize; }
@@ -97,7 +104,7 @@ enum class Button
 //ボタン番号をビットに変換
 std::uint32_t ButtonBit(Button button)
 {
-    return 1u << static_cast<ustd::int32_t>(button);
+    return 1u << static_cast<std::uint32_t>(button);
 }
 
 class InputManager
@@ -182,10 +189,10 @@ void InputManager::Execute(std::uint32_t systemTimeMs, std::uint32_t held)
 class FallingPair
 {
 private:
-    int mX; // 左端を0 右端をWIDTH-1とする
-    int mY; // 一番上の段をHEIGHT-1、一番下の段を0とする
-    Direction mDirection;
-    std::array<BlockColor, 2> mColors;
+    int mX = 0; // 左端を0 右端をWIDTH-1とする
+    int mY = HEIGHT - 2; // 一番上の段をHEIGHT-1、一番下の段を0とする
+    Direction mDirection = Direction::Up;
+    std::array<BlockColor, 2> mColors{};
 
 public:
     void Reset()
@@ -216,7 +223,7 @@ public:
     }
     void SetColor(std::size_t index, BlockColor color)
     {
-        assert((index < 2));
+        assert(index < 2);
         mColors[index] = color;
     }
     BlockColor GetColor(std::size_t index) const
@@ -258,7 +265,7 @@ public:
 
 struct EraseFlags
 {
-    std::uint32_t mFlags[WIDTH];
+    std::uint32_t mFlags[WIDTH]{};
     void Init()
     {
         for (auto& f : mFlags)
@@ -328,20 +335,20 @@ public:
     bool FindEraseBlocks();
     void SearchConnectedBlocks(int x, int y, BlockColor color, EraseFlags& checkedFlags, EraseFlags& connectedFlags, int& count);
 
-    int CountEraseBlocks()const;
+    int CountEraseBlocks() const;
 
     //mEraseFlagsに従ってブロックを消す
     void EraseBlocks();
 
-    void Print();
+    void Print() const;
 
     BlockColor GetColor(int x, int y)const { return mCells[y][x]; }
 
     //指定のブロックは消えるフラグが立っている？
-    bool IsEraseBlock(int x, int y)const;
+    bool IsEraseBlock(int x, int y) const;
 
     //真ん中あたりの消えるブロックの位置を取得する
-    void SearchCenterEraseBlock(int& x, int& y);
+    void SearchCenterEraseBlock(int& x, int& y) const;
 };
 //1ブロック配置
 void Board::PutOne(int x, int y, BlockColor color)
@@ -562,12 +569,12 @@ void Board::EraseBlocks()
     }
 }
 //指定のブロックは消えるフラグが立っている？
-bool Board::IsEraseBlock(int x, int y)const
+bool Board::IsEraseBlock(int x, int y) const
 {
     return mEraseFlags.IsOn(x, y);
 }
 //真ん中あたりの消えるボロックの位置を取得する
-void Board::SearchCenterEraseBlock(int& x, int& y)
+void Board::SearchCenterEraseBlock(int& x, int& y) const
 {
     int minX = WIDTH;
     int maxX = 0;
@@ -587,7 +594,7 @@ void Board::SearchCenterEraseBlock(int& x, int& y)
     y = (maxY + minY) / 2;
 }
 
-int Board::CountEraseBlocks()const
+int Board::CountEraseBlocks() const
 {
     int count = 0;
     for (int y = 0; y < HEIGHT; y++) {
@@ -600,7 +607,7 @@ int Board::CountEraseBlocks()const
     return count;
 }
 
-void Board::Print()
+void Board::Print() const
 {
     for (int y = HEIGHT - 1; y >= 0; y--) {
         for (int x = 0; x < WIDTH; x++) {
@@ -626,30 +633,67 @@ enum class GameEventType {
 };
 
 struct GameEvent {
-    GameEvent(GameEventType type, int x, int y, int chainCount, BlockColor blockColor)
-        :mEventType(type), mX(x), mY(y), mChainCount(chainCount), mBlockColor(blockColor) {
+
+    GameEvent(GameEventType type, int x, int y, std::uint32_t chainCount, BlockColor blockColor)
+        :mEventType(type), mX(x), mY(y), mChainCount(chainCount), mBlockColor(blockColor)
+    {
 
     }
-    GameEventType mEventType;
-    int mX;
-    int mY;
-    int mChainCount;
-    BlockColor mBlockColor;
+
+    GameEvent() = default;
+
+    void Set(GameEventType type, int x, int y, std::uint32_t chainCount, BlockColor blockColor)
+    {
+        mEventType = type;
+        mX = x;
+        mY = y;
+        mChainCount = chainCount;
+        mBlockColor = blockColor;
+    }
+
+    GameEventType mEventType{};
+    int mX = 0;
+    int mY = 0;
+    std::uint32_t mChainCount = 0;
+    BlockColor mBlockColor = BlockColor::Empty;
 };
 
 class GameEventManager {
 private:
-    std::queue<GameEvent> mGameEvents;
+    static constexpr std::size_t MaxEvents = 80;
+    std::array<GameEvent, MaxEvents> mGameEvents;
+    std::uint8_t mTop = 0;
+    std::uint8_t mEnd = 0;
 public:
-    void Push(GameEventType type, int x, int y, int chainCount, BlockColor blockColor) {
-        mGameEvents.emplace(type, x, y, chainCount, blockColor);
+    void Push(GameEventType type, int x, int y, std::uint32_t chainCount, BlockColor blockColor)
+    {
+        std::uint8_t next = mEnd + 1;
+        if (next >= MaxEvents)
+        {
+            next = 0;
+        }
+
+        //次の書き込み先が先頭なら満杯
+        assert(next != mTop);
+
+        mGameEvents[mEnd].Set(type, x, y, chainCount, blockColor);
+        mEnd = next;
     }
-    bool IsEmpty() const {
-        return mGameEvents.empty();
+
+    bool IsEmpty() const
+    {
+        return mTop == mEnd;
     }
-    GameEvent Pop() {
-        GameEvent gameEvent = mGameEvents.front();
-        mGameEvents.pop();
+    GameEvent Pop()
+    {
+        assert(mTop != mEnd);
+
+        GameEvent gameEvent = mGameEvents[mTop];
+        mTop++;
+        if (mTop >= MaxEvents)
+        {
+            mTop = 0;
+        }
         return gameEvent;
     }
 };
@@ -662,9 +706,12 @@ private:
     FallingPair mNextPair;    // 次に出現するブロック
     Board mBoard;
     PlayState mState = PlayState::Spawn;
-    int mChainCount = 0;
-    int mScore = 0;
+    std::uint32_t mChainCount = 0;
+    std::uint32_t mScore = 0;
     GameResult mGameResult = GameResult::Playing;
+
+    std::uint32_t mTotalEraseBlockCount = 0;//全部で何個消したか
+    std::uint32_t mEraseBlockCountForSpeedUp = 0;//落下速度を加速させるための消したブロックのカウンタ
 
     std::uint32_t mRandomSeed = 0;
 
@@ -677,7 +724,7 @@ private:
     //落下開始時の時間
     std::uint32_t mDropStartTimeMs = 0;
 
-    std::uint32_t mSpawnTimeMs = 0;
+    std::uint32_t mSpawnStartTimeMs = 0;
 
     //
     std::uint32_t mEraseCheckTimeMs = 0;
@@ -698,6 +745,9 @@ public:
         mFallingPair.Reset();
         mNextPair.Reset();
 
+        mTotalEraseBlockCount = 0;//全部で何個消したか
+        mEraseBlockCountForSpeedUp = 0;//落下速度を加速させるための消したブロックのカウンタ
+
         mAutoFallIntervalMs = InitialAutoFallIntervalMs;//開始時はInitialAutoFallIntervalMsミリ秒ごとに１マス落下。ブロックを消していくと徐々に少なくする
 
         mDropStartTimeMs = 0;
@@ -706,7 +756,7 @@ public:
 
         mEraseStartTimeMs = 0;
 
-        mSpawnTimeMs = 0;
+        mSpawnStartTimeMs = 0;
 
         mSystemTimeMs = systemTimeMs;
 
@@ -715,9 +765,10 @@ public:
         SetState(PlayState::Spawn, gameEventManager);
     }
 
-    int GetChainCount() const { return mChainCount; }
-    int GetScore()const { return mScore; }
-    int CalcScore()const;
+    std::uint32_t GetChainCount() const { return mChainCount; }
+    std::uint32_t GetScore()const { return mScore; }
+    //スコア計算
+    std::uint32_t CalcScore(std::uint32_t eraseBlockCount, std::uint32_t chainCount)const;
 
     void SetRandomSeed(std::uint32_t randomSeed)
     {
@@ -746,6 +797,8 @@ public:
     void EraseCheck(GameEventManager& gameEventManager);
     void Erase(GameEventManager& gameEventManager);
 
+    void Land(GameEventManager& gameEventManager);
+
     // GameManager側から結果を取得するため
     GameResult GetGameResult() const { return mGameResult; }
 
@@ -762,6 +815,9 @@ public:
     const Board& GetBoard()const { return mBoard; }
 
     std::uint32_t GetRandomSeed()const { return mRandomSeed; }
+
+    std::uint32_t GetAutoFallIntervalMs()const { return mAutoFallIntervalMs; }
+    std::uint32_t GetTotalEraseBlockCount()const { return mTotalEraseBlockCount; }
 };
 
 //落下時間計測のタイマーをリセット
@@ -822,7 +878,7 @@ void PlayingManager::SetState(PlayState next, GameEventManager& gameEventManager
             //連鎖数リセット
             mChainCount = 0;
 
-            mSpawnTimeMs = mSystemTimeMs;
+            mSpawnStartTimeMs = mSystemTimeMs;
             break;
         }
 
@@ -921,7 +977,7 @@ void PlayingManager::Execute(const InputManager& input, std::uint32_t systemTime
 // 新しいブロック出現
 void PlayingManager::Spawn(GameEventManager& gameEventManager)
 {
-    if ((mSystemTimeMs - mSpawnTimeMs) >= SpawnTimeMs) // ブロック追加演出完了？
+    if ((mSystemTimeMs - mSpawnStartTimeMs) >= SpawnDelayMs) // ブロック追加演出完了？
     {
         SetState(PlayState::Control, gameEventManager);
     }
@@ -953,8 +1009,8 @@ void PlayingManager::Control(const InputManager& input, GameEventManager& gameEv
             mFallingPair = pair;
         }
         else {
-            SetState(PlayState::DropBlocks, gameEventManager);
-            mBoard.PutPair(mFallingPair);
+            // 着地処理
+            Land(gameEventManager);
             return;
         }
     }
@@ -965,15 +1021,45 @@ void PlayingManager::Control(const InputManager& input, GameEventManager& gameEv
 
         // 90度
         pair.Rotate();
-        if (mBoard.CanPlace(pair)) {
+        if (mBoard.CanPlace(pair))
+        {
             mFallingPair = pair;
         }
-        else {
-            // 180度
-            pair.Rotate();
-            if (mBoard.CanPlace(pair))
+        else
+        {
+            bool slide = false;
+            //相方が左にいる場合は右にずらしてみる
+            if (pair.GetDirection() == Direction::Left)
             {
-                mFallingPair = pair;
+                FallingPair pairSlide = pair;
+                pairSlide.Move(+1, 0);
+                if (mBoard.CanPlace(pairSlide))
+                {
+                    mFallingPair = pairSlide;
+                    slide = true;
+                }
+            }
+            //相方が右にいる場合は左にずらしてみる
+            else if (pair.GetDirection() == Direction::Right)
+            {
+                FallingPair pairSlide = pair;
+                pairSlide.Move(-1, 0);
+                if (mBoard.CanPlace(pairSlide))
+                {
+                    mFallingPair = pairSlide;
+                    slide = true;
+                }
+            }
+
+            if (!slide)
+            {
+                //スライドできなかった場合は
+                // 180度
+                pair.Rotate();
+                if (mBoard.CanPlace(pair))
+                {
+                    mFallingPair = pair;
+                }
             }
         }
     }
@@ -991,36 +1077,67 @@ void PlayingManager::Control(const InputManager& input, GameEventManager& gameEv
         else {
             // 着地して、一定時間経過している
             // 着地処理
-            SetState(PlayState::DropBlocks, gameEventManager);
-
-            mBoard.PutPair(mFallingPair);
+            Land(gameEventManager);
         }
     }
+}
+//着地処理
+void PlayingManager::Land(GameEventManager& gameEventManager)
+{
+    mBoard.PutPair(mFallingPair);
+
+    if (!mBoard.HasFloatingBlocks())//浮いているブロックがない？
+    {
+        //浮いているブロックがないので消えるブロックがあるかチェック
+        SetState(PlayState::EraseCheck, gameEventManager);
+    }
+    else {
+        //浮いているブロックがある場合
+        SetState(PlayState::DropBlocks, gameEventManager);
+    }
+
 }
 
 // 消去チェック
 void PlayingManager::EraseCheck(GameEventManager& gameEventManager) {
 
-    if ((mSystemTimeMs - mEraseCheckTimeMs) >= EraseCheckTimeMs) {
-        if (mBoard.FindEraseBlocks()) {// 消える？
+    if ((mSystemTimeMs - mEraseCheckTimeMs) >= EraseCheckTimeMs)
+    {
+        if (mBoard.FindEraseBlocks()) // 消える？
+        {
             SetState(PlayState::Erase, gameEventManager);
         }
-        else {
+        else
+        {
             SetState(PlayState::Spawn, gameEventManager);
         }
     }
 }
-int PlayingManager::CalcScore() const
+//得点計算
+std::uint32_t PlayingManager::CalcScore(std::uint32_t eraseBlockCount, std::uint32_t chainCount) const
 {
-    return mBoard.CountEraseBlocks() * mChainCount;
+    return eraseBlockCount * chainCount;
 }
 // ブロックを消去
 void PlayingManager::Erase(GameEventManager& gameEventManager)
 {
-    if ((mSystemTimeMs - mEraseStartTimeMs) >= EraseTimeMs) // 消去処理終了？
+    if ((mSystemTimeMs - mEraseStartTimeMs) >= EraseDurationMs) // 消去処理終了？
     {
+        std::uint32_t eraseBlockCount = mBoard.CountEraseBlocks();
         //スコア計算
-        mScore += CalcScore();
+        mScore += CalcScore(eraseBlockCount, mChainCount);
+
+        mTotalEraseBlockCount += eraseBlockCount;//全部で何個消したか
+
+        mEraseBlockCountForSpeedUp += eraseBlockCount;//落下速度を加速させるための消したブロックのカウンタ
+
+        //規定の個数を消したか？
+        while (mEraseBlockCountForSpeedUp >= EraseCountForSpeedUp) {
+            mEraseBlockCountForSpeedUp -= EraseCountForSpeedUp;
+
+            //落下速度アップ
+            mAutoFallIntervalMs = std::max(MinAutoFallIntervalMs, mAutoFallIntervalMs - AutoFallDecreaseMs);
+        }
 
         //ブロックを消す
         mBoard.EraseBlocks();
@@ -1043,7 +1160,7 @@ void PlayingManager::DropBlocks(GameEventManager& gameEventManager)
     {
         mBoard.DropFloatingBlocks();
 
-        if (!mBoard.HasFloatingBlocks())//浮いているブロックがある？
+        if (!mBoard.HasFloatingBlocks())//浮いているブロックがない？
         {
             //浮いているブロックがないので消えるブロックがあるかチェック
             SetState(PlayState::EraseCheck, gameEventManager);
@@ -1111,6 +1228,9 @@ public:
 
     bool IsGameEventEmpty()const { return mGameEventManager.IsEmpty(); }
     GameEvent PopGameEvent() { return mGameEventManager.Pop(); }
+
+    std::uint32_t GetAutoFallIntervalMs()const { return mPlayingManager.GetAutoFallIntervalMs(); }
+    std::uint32_t GetTotalEraseBlockCount()const { return mPlayingManager.GetTotalEraseBlockCount(); }
 
 };
 
@@ -1285,7 +1405,7 @@ void DrawString(SDL_Renderer* renderer, int x, int y, const std::string& str, in
     std::string strUpper = str;
     for (char& c : strUpper) {
         if (c >= 'a' && c <= 'z') {
-            c = c - 'a' + 'A';
+            c = static_cast<char>(c - 'a' + 'A');
         }
     }
 
@@ -1409,6 +1529,28 @@ void DrawPlaying(SDL_Renderer* renderer, const GameManager& gameManager)
         DrawString(renderer, x, y + FONT_SIZE, str, 1, 0xFFFFFFFF, false);
     }
 
+    //消した総数
+    {
+        std::uint32_t total = gameManager.GetTotalEraseBlockCount();
+        int x = 112;
+        int y = 120;
+        DrawString(renderer, x, y, "TOTAL", 1, 0xFFFFFFFF, false);
+
+        std::string str = std::to_string(total);
+        DrawString(renderer, x, y + FONT_SIZE, str, 1, 0xFFFFFFFF, false);
+    }
+
+    //落下速度
+    {
+        std::uint32_t total = gameManager.GetAutoFallIntervalMs();
+        int x = 112;
+        int y = 144;
+        DrawString(renderer, x, y, "INTERVAL", 1, 0xFFFFFFFF, false);
+
+        std::string str = std::to_string(total);
+        DrawString(renderer, x, y + FONT_SIZE, str, 1, 0xFFFFFFFF, false);
+    }
+
 }
 void DrawGameOver(SDL_Renderer* renderer)
 {
@@ -1418,6 +1560,7 @@ void DrawGameOver(SDL_Renderer* renderer)
         int y = WINDOW_HEIGHT / 2 - FONT_SIZE / 2;
         DrawString(renderer, x, y, str, 1, 0xFFFFFFFF, false);
     }
+
     {
         std::string str = "PRESS SPACE";
         int x = WINDOW_WIDTH / 2 - FONT_SIZE * static_cast<int>(str.size()) / 2;
@@ -1515,7 +1658,6 @@ private:
     int mOffsetY = 0;
     std::uint32_t mAlpha = 255;
     std::uint32_t mColor = 0xFFFFFF;
-    int mCount = 0;
     int mChainNum = 0;
 public:
     EffectChain(int x, int y, std::uint32_t lifeTimeMs, std::uint32_t startTimeMs, int chainNum)
@@ -1523,19 +1665,17 @@ public:
         mOffsetY = 0;
         mAlpha = 255;
         mColor = 0xFFFFFF;
-        mCount = 0;
     }
     void Execute(std::uint32_t systemTimeMs) override {
         float rate = CalcRate(systemTimeMs);
         mAlpha = static_cast<std::uint32_t>(255 - 255 * rate) & 0xFF;
         mOffsetY = static_cast<int>(32 - 32 * rate);
-        static const std::uint32_t colorTbl[] = {
-                0xFF0000,
-                0xFFFF00,
-                0xFFFFFF,
-                0x00FF00,
-                0xFF00FF,
-                0x0000FF,
+        static const std::array<std::uint32_t, 5> colorTbl = {
+            0xFF0000,
+            0xFFFF00,
+            0xFFFFFF,
+            0x00FF00,
+            0xFF00FF,
         };
         int index = 0;
         if (rate < 0.2f) {
@@ -1553,6 +1693,7 @@ public:
         else {
             index = 4;
         }
+        assert(index < colorTbl.size());
         mColor = colorTbl[index];
 
     }
@@ -1562,7 +1703,7 @@ public:
     }
 };
 
-int main(int argc, char* argv[])
+int main(int, char* [])
 {
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
     {
@@ -1574,8 +1715,8 @@ int main(int argc, char* argv[])
         "cpp-puyo",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        320,
-        240,
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
         SDL_WINDOW_SHOWN
     );
     if (window == nullptr)
@@ -1701,7 +1842,7 @@ int main(int argc, char* argv[])
                     {
                         int x = CalcBoardX(ge.mX);
                         int y = CalcBoardY(ge.mY);
-                        std::unique_ptr<EffectChain> effectChain = std::make_unique<EffectChain>(x, y, 1500, systemTimeMs, ge.mChainCount);
+                        std::unique_ptr<EffectChain> effectChain = std::make_unique<EffectChain>(x, y, ChainEffectDispTimeMs, systemTimeMs, ge.mChainCount);
                         effectManager.AddEffect(std::move(effectChain));
                         break;
                     }
@@ -1709,7 +1850,7 @@ int main(int argc, char* argv[])
                     {
                         int x = CalcBoardX(ge.mX) + BlockSize / 2;
                         int y = CalcBoardY(ge.mY) + BlockSize / 2;
-                        std::unique_ptr<EffectBlockErase> effectEraseBlock = std::make_unique<EffectBlockErase>(x, y, ge.mBlockColor, 1500, systemTimeMs);
+                        std::unique_ptr<EffectBlockErase> effectEraseBlock = std::make_unique<EffectBlockErase>(x, y, ge.mBlockColor, BlockEraseEffectTimeMs, systemTimeMs);
                         effectManager.AddEffect(std::move(effectEraseBlock));
                         break;
                     }
