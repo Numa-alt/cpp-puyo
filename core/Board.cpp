@@ -276,9 +276,9 @@ void Board::SearchCenterEraseBlock(int& x, int& y) const
     y = (maxY + minY) / 2;
 }
 
-int Board::CountEraseBlocks() const
+std::uint32_t Board::CountEraseBlocks() const
 {
-    int count = 0;
+    std::uint32_t count = 0;
 
     for (int y = 0; y < HEIGHT; y++)
     {
@@ -293,23 +293,7 @@ int Board::CountEraseBlocks() const
     return count;
 }
 
-void Board::Print() const
+BlockColor Board::GetColor(int x, int y) const
 {
-    for (int y = HEIGHT - 1; y >= 0; y--)
-    {
-        for (int x = 0; x < WIDTH; x++)
-        {
-            char c = '.';
-            switch (mCells[y][x]) {
-            case BlockColor::Red: c = 'r'; break;
-            case BlockColor::Blue: c = 'b'; break;
-            case BlockColor::Yellow: c = 'y'; break;
-            case BlockColor::Green: c = 'g'; break;
-            case BlockColor::Empty: c = '.'; break;
-            }
-            std::cout << c;
-        }
-        std::cout << "\n";
-    }
-    std::cout << "\n";
+    return mCells[y][x];
 }

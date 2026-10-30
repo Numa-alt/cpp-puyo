@@ -8,7 +8,7 @@ static const int WINDOW_HEIGHT = 240;
 
 static const int BlockSize = 16;
 static const int BoardOffsetX = 8;
-static const int BoardOffsetY = 240 - 8 - BlockSize;
+static const int BoardOffsetY = WINDOW_HEIGHT - 8 - BlockSize;
 
 static const std::uint32_t ChainEffectDispTimeMs = 1500;
 static const std::uint32_t BlockEraseEffectTimeMs = 1500;

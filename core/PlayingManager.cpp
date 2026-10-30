@@ -181,8 +181,8 @@ void PlayingManager::SetState(PlayState next, GameEventManager& gameEventManager
                     for (int iy = 0; iy < HEIGHT; iy++) {
                         if (mBoard.IsEraseBlock(ix, iy)) {
                             BlockColor color = mBoard.GetColor(ix, iy);
-                            gameEventManager.Push(GameEventType::BlockErased, ix, iy, 0, color);
-
+                            std::uint32_t chainCount = 0;
+                            bool success = gameEventManager.Push(GameEventType::BlockErased, ix, iy, chainCount, color);
                         }
                     }
                 }
@@ -194,7 +194,7 @@ void PlayingManager::SetState(PlayState next, GameEventManager& gameEventManager
                 int y = 0;
                 //真ん中あたりの消えるボロックの位置を取得する
                 mBoard.SearchCenterEraseBlock(x, y);
-                gameEventManager.Push(GameEventType::Chain, x, y, mChainCount, BlockColor::Empty);
+                bool success = gameEventManager.Push(GameEventType::Chain, x, y, mChainCount, BlockColor::Empty);
             }
 
             break;
@@ -367,7 +367,7 @@ void PlayingManager::Land(GameEventManager& gameEventManager)
 // 消去チェック
 void PlayingManager::EraseCheck(GameEventManager& gameEventManager) {
 
-    if ((mSystemTimeMs - mEraseCheckTimeMs) >= EraseCheckTimeMs)
+    if ((mSystemTimeMs - mEraseCheckTimeMs) >= EraseCheckDelayMs)
     {
         if (mBoard.FindEraseBlocks()) // 消える？
         {
@@ -401,6 +401,8 @@ void PlayingManager::Erase(GameEventManager& gameEventManager)
         while (mEraseBlockCountForSpeedUp >= EraseCountForSpeedUp) {
             mEraseBlockCountForSpeedUp -= EraseCountForSpeedUp;
 
+            static_assert(MinAutoFallIntervalMs >= AutoFallDecreaseMs, "underflow guard");
+
             //落下速度アップ
             mAutoFallIntervalMs = std::max(MinAutoFallIntervalMs, mAutoFallIntervalMs - AutoFallDecreaseMs);
         }
@@ -422,7 +424,7 @@ void PlayingManager::Erase(GameEventManager& gameEventManager)
 // ブロック落下処理
 void PlayingManager::DropBlocks(GameEventManager& gameEventManager)
 {
-    if ((mSystemTimeMs - mDropStartTimeMs) >= DropTimeMs) // 落下処理終了？
+    if ((mSystemTimeMs - mDropStartTimeMs) >= DropStepMs) // 落下処理終了？
     {
         mBoard.DropFloatingBlocks();
 

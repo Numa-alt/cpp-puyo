@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <cstddef>
 
 #include "GameTypes.h"
 
@@ -12,8 +13,8 @@ private:
     std::uint32_t mReleased = 0;//離した瞬間１
     std::uint32_t mRepeat = 0;//リピート
 
-    std::array<std::uint32_t, static_cast<size_t>(Button::Max)> mSystemTimeMs{};
-    std::array<std::uint32_t, static_cast<size_t>(Button::Max)> mRepeatCount{};
+    std::array<std::uint32_t, static_cast<std::size_t>(Button::Max)> mSystemTimeMs{};
+    std::array<std::uint32_t, static_cast<std::size_t>(Button::Max)> mRepeatCount{};
 
 public:
 

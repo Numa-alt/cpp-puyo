@@ -3,6 +3,7 @@
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <cstddef>
 
 #include "GameTypes.h"
 
@@ -40,24 +41,23 @@ struct GameEvent {
 
 class GameEventManager {
 private:
-    static constexpr std::size_t MaxEvents = 80;
+    static constexpr std::size_t MaxEvents = WIDTH * HEIGHT + 2;
     std::array<GameEvent, MaxEvents> mGameEvents;
-    std::uint8_t mTop = 0;
-    std::uint8_t mEnd = 0;
+    std::size_t mTop = 0;
+    std::size_t mEnd = 0;
 public:
-    void Push(GameEventType type, int x, int y, std::uint32_t chainCount, BlockColor blockColor)
+    [[nodiscard]] bool Push(GameEventType type, int x, int y, std::uint32_t chainCount, BlockColor blockColor)
     {
-        std::uint8_t next = mEnd + 1;
-        if (next >= MaxEvents)
-        {
-            next = 0;
-        }
-
+        std::size_t next = (mEnd + 1) % MaxEvents;
         //次の書き込み先が先頭なら満杯
-        assert(next != mTop);
-
+        if (next == mTop)
+        {
+            //満杯：上書きせず捨てる
+            return false;
+        }
         mGameEvents[mEnd].Set(type, x, y, chainCount, blockColor);
         mEnd = next;
+        return true;
     }
 
     bool IsEmpty() const

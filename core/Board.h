@@ -15,15 +15,15 @@ struct EraseFlags
     }
     void On(int x, int y)
     {
-        mFlags[x] |= BIT(y);
+        mFlags[x] |= Bit(y);
     }
     void Off(int x, int y)
     {
-        mFlags[x] &= ~BIT(y);
+        mFlags[x] &= ~Bit(y);
     }
     bool IsOn(int x, int y) const
     {
-        return static_cast<bool>(mFlags[x] & BIT(y));
+        return static_cast<bool>(mFlags[x] & Bit(y));
     }
 };
 
@@ -38,6 +38,7 @@ private:
     //消えるブロックにフラグを立てる
     EraseFlags mEraseFlags;
 
+    void SearchConnectedBlocks(int x, int y, BlockColor color, EraseFlags& checkedFlags, EraseFlags& connectedFlags, int& count);
 public:
     Board()
     {
@@ -73,20 +74,18 @@ public:
 
     //消えるブロックにフラグを立てる
     bool FindEraseBlocks();
-    void SearchConnectedBlocks(int x, int y, BlockColor color, EraseFlags& checkedFlags, EraseFlags& connectedFlags, int& count);
 
-    int CountEraseBlocks() const;
+    std::uint32_t CountEraseBlocks() const;
 
     //mEraseFlagsに従ってブロックを消す
     void EraseBlocks();
 
-    void Print() const;
-
-    BlockColor GetColor(int x, int y)const { return mCells[y][x]; }
+    BlockColor GetColor(int x, int y) const;
 
     //指定のブロックは消えるフラグが立っている？
     bool IsEraseBlock(int x, int y) const;
 
     //真ん中あたりの消えるブロックの位置を取得する
     void SearchCenterEraseBlock(int& x, int& y) const;
+
 };

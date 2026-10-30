@@ -74,9 +74,9 @@ private:
     int mOffsetY = 0;
     std::uint32_t mAlpha = 255;
     std::uint32_t mColor = 0xFFFFFF;
-    int mChainNum = 0;
+    std::uint32_t mChainNum = 0;
 public:
-    EffectChain(int x, int y, std::uint32_t lifeTimeMs, std::uint32_t startTimeMs, int chainNum);
+    EffectChain(int x, int y, std::uint32_t lifeTimeMs, std::uint32_t startTimeMs, std::uint32_t chainNum);
     void Execute(std::uint32_t systemTimeMs) override;
     void Draw(SDL_Renderer* renderer) override;
 };

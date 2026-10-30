@@ -98,7 +98,7 @@ void EffectBlockErase::Draw(SDL_Renderer* renderer)
     SDL_RenderFillRect(renderer, &rect);
 }
 
-EffectChain::EffectChain(int x, int y, std::uint32_t lifeTimeMs, std::uint32_t startTimeMs, int chainNum)
+EffectChain::EffectChain(int x, int y, std::uint32_t lifeTimeMs, std::uint32_t startTimeMs, std::uint32_t chainNum)
     : Effect(lifeTimeMs, startTimeMs), mX(x), mY(y), mChainNum(chainNum)
 {
     mOffsetY = 0;

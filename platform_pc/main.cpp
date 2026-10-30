@@ -6,10 +6,6 @@
 #include <string>
 
 #include <cassert>
-// #include <array>
-// #include <functional>
-// #include <vector>
-// #include <algorithm>
 
 #include <SDL.h>
 
@@ -18,20 +14,6 @@
 #include "Renderer.h"
 #include "GameConfig.h"
 #include "PcConfig.h"
-
-
-// #include "font8x8.h"
-
-// #include "GameTypes.h"
-// #include "FallingPair.h"
-// #include "Board.h"
-// #include "GameEvent.h"
-// #include "InputManager.h"
-// #include "PlayingManager.h"
-
-
-
-
 
 int main(int, char* [])
 {
@@ -82,8 +64,8 @@ int main(int, char* [])
 
     bool running = true;
 
-    int frameCount = 0;
-    int count = 0;
+    std::uint32_t frameCount = 0;
+    std::uint32_t count = 0;
     std::uint32_t frameCountSystemTimeMs = 0;
 
     while (true) {
@@ -128,26 +110,9 @@ int main(int, char* [])
         ClearScreen(renderer);
 
         //FPS
-        {
-            std::ostringstream oss;
-            oss << "FPS " << frameCount;
-            std::string str = oss.str();
-            DrawString(renderer, 240, 2, str, 1, 0xFFFFFFFF, false);
-        }
-
-        {
-            PlayState state = gameManager.GetPlayState();
-            std::string str;
-            switch (state) {
-            case PlayState::Control: str += "Control";break;
-            case PlayState::DropBlocks: str += "DropBlocks";break;
-            case PlayState::Erase: str += "Erase";break;
-            case PlayState::EraseCheck: str += "EraseCheck";break;
-            case PlayState::Result: str += "Result";break;
-            case PlayState::Spawn: str += "Spawn";break;
-            }
-            DrawString(renderer, 80, 2, str, 1, 0xFFFFFFFF, false);
-        }
+#ifdef DEBUG_OVERLAY
+        DrawFps(renderer, frameCount);
+#endif
 
         auto now = std::chrono::steady_clock::now();
 

@@ -137,3 +137,7 @@ std::uint32_t GameManager::GetTotalEraseBlockCount()const
 {
     return mPlayingManager.GetTotalEraseBlockCount();
 }
+GameState GameManager::GetState() const
+{
+    return mGameState;
+}

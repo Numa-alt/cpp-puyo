@@ -1,15 +1,11 @@
-// enum class GameState;
-// enum class PlayState;
-// enum class GameResult;
-// enum class BlockColor;
-// enum class Direction;
-// enum class Button;
-
 #pragma once
 
 #include <cstdint>
 
-#define BIT(x) (1u << (x))
+constexpr std::uint32_t Bit(int n)
+{
+    return 1u << n;
+}
 
 #include "GameConfig.h"
 

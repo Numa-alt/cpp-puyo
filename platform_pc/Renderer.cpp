@@ -1,9 +1,24 @@
+#include <sstream>
+
+
 #include "Renderer.h"
 
 #include "GameConfig.h"
 #include "font8x8.h"
 
 #include "PcConfig.h"
+
+
+
+#ifdef DEBUG_OVERLAY
+void DrawFps(SDL_Renderer* renderer, std::uint32_t frameCount)
+{
+    std::ostringstream oss;
+    oss << "FPS " << frameCount;
+    std::string str = oss.str();
+    DrawString(renderer, 240, 2, str, 1, 0xFFFFFFFF, false);
+}
+#endif
 
 
 int CalcBoardX(int ix)
@@ -15,7 +30,6 @@ int CalcBoardY(int iy)
     return BoardOffsetY - iy * BlockSize;
 }
 
-
 void DrawChar(SDL_Renderer* renderer, int x, int y, char c, int scale, std::uint32_t color)
 {
     //char c = 'A';
@@ -26,7 +40,7 @@ void DrawChar(SDL_Renderer* renderer, int x, int y, char c, int scale, std::uint
         for (int ix = 0; ix < FONT_SIZE; ix++) {
             int px = x + ix * scale;
             for (int iy = 0; iy < FONT_SIZE; iy++) {
-                if (data[iy] & BIT((FONT_SIZE - 1) - ix)) {
+                if (data[iy] & Bit((FONT_SIZE - 1) - ix)) {
                     int py = y + iy * scale;
                     SDL_Rect rect{
                         px,py,scale,scale
@@ -163,7 +177,7 @@ void DrawPlaying(SDL_Renderer* renderer, const GameManager& gameManager)
         int y = 2;
         DrawString(renderer, x, y, "SCORE", 1, 0xFFFFFFFF, false);
 
-        int score = gameManager.GetScore();
+        std::uint32_t score = gameManager.GetScore();
         std::string str = std::to_string(score);
         DrawString(renderer, x, y + FONT_SIZE, str, 1, 0xFFFFFFFF, false);
     }

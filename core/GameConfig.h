@@ -8,9 +8,9 @@ static constexpr int WIDTH = 6;
 
 
 static const std::uint32_t SpawnDelayMs = 300;
-static const std::uint32_t EraseCheckTimeMs = 10;
+static const std::uint32_t EraseCheckDelayMs = 10;
 static const std::uint32_t EraseDurationMs = 300;
-static const std::uint32_t DropTimeMs = 200;
+static const std::uint32_t DropStepMs = 200;
 static const std::uint32_t InitialAutoFallIntervalMs = 1000;
 
 //この個数を消すごとに落下速度が早くなる

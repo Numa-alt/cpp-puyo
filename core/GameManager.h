@@ -20,18 +20,18 @@ private:
 
     GameEventManager mGameEventManager;
 
+    void Title();
+    void Playing(std::uint32_t systemTime);
+    void GameOver();
+    void GameClear();
+
 public:
     void Execute(std::uint32_t systemTimeMs, std::uint32_t held);
 
     //
     void SetState(GameState next);
 
-    GameState GetState()const { return mGameState; };
-
-    void Title();
-    void Playing(std::uint32_t systemTime);
-    void GameOver();
-    void GameClear();
+    GameState GetState() const;
 
     const Board& GetBoard() const;
 
