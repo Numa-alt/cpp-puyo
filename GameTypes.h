@@ -11,9 +11,7 @@
 
 #define BIT(x) (1u << (x))
 
-// 盤面のサイズ
-static constexpr int HEIGHT = 12;
-static constexpr int WIDTH = 6;
+#include "GameConfig.h"
 
 enum class GameState
 {

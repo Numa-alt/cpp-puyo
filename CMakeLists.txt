@@ -11,6 +11,8 @@ find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
 add_executable(cpp_puyo
     main.cpp
     Board.cpp
+    InputManager.cpp
+    PlayingManager.cpp
     font8x8.cpp
 )
 

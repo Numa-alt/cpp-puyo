@@ -40,6 +40,7 @@ bool Board::CanPlace(const FallingPair& pair) const
     {
         return false;
     }
+
     // 軸のブロックの位置が空いてない？
     if (mCells[y][x] != BlockColor::Empty)
     {
@@ -62,6 +63,7 @@ bool Board::CanPlace(const FallingPair& pair) const
         x += 1;
         break;
     }
+
     // 相方のブロックが範囲外？
     if ((x < 0) || (x >= WIDTH) || (y < 0) || (y >= HEIGHT))
     {
@@ -83,7 +85,8 @@ bool Board::HasFloatingBlocks() const
     {
         for (int y = 0; y < HEIGHT - 1; y++)
         {
-            if (mCells[y][x] == BlockColor::Empty) {
+            if (mCells[y][x] == BlockColor::Empty)
+            {
                 for (int yy = y + 1; yy < HEIGHT; yy++)
                 {
                     if (mCells[yy][x] != BlockColor::Empty)
@@ -123,9 +126,12 @@ bool Board::FindEraseBlocks()
 
     mEraseFlags.Init();
 
-    for (int y = 0; y < HEIGHT; y++) {
-        for (int x = 0; x < WIDTH; x++) {
-            if ((mCells[y][x] != BlockColor::Empty) && !mEraseFlags.IsOn(x, y)) {
+    for (int y = 0; y < HEIGHT; y++)
+    {
+        for (int x = 0; x < WIDTH; x++)
+        {
+            if ((mCells[y][x] != BlockColor::Empty) && !mEraseFlags.IsOn(x, y))
+            {
 
                 EraseFlags checkedFlags;
                 checkedFlags.Init();
@@ -139,11 +145,15 @@ bool Board::FindEraseBlocks()
 
                 SearchConnectedBlocks(x, y, mCells[y][x], checkedFlags, connectedFlags, count);
 
-                if (count >= 4) {
+                if (count >= 4)
+                {
                     //消えるものにフラグを立てる
-                    for (int yy = 0; yy < HEIGHT; yy++) {
-                        for (int xx = 0; xx < WIDTH; xx++) {
-                            if (connectedFlags.IsOn(xx, yy)) {
+                    for (int yy = 0; yy < HEIGHT; yy++)
+                    {
+                        for (int xx = 0; xx < WIDTH; xx++)
+                        {
+                            if (connectedFlags.IsOn(xx, yy))
+                            {
                                 mEraseFlags.On(xx, yy);
                             }
                         }
@@ -165,10 +175,13 @@ bool Board::FindEraseBlocks()
 void Board::SearchConnectedBlocks(int x, int y, BlockColor color, EraseFlags& checkedFlags, EraseFlags& connectedFlags, int& count)
 {
     //上
-    if ((y + 1) < HEIGHT) {
-        if (!checkedFlags.IsOn(x, y + 1)) {//未チェック？
+    if ((y + 1) < HEIGHT)
+    {
+        if (!checkedFlags.IsOn(x, y + 1)) //未チェック？
+        {
             checkedFlags.On(x, y + 1);
-            if (mCells[y + 1][x] == color) {
+            if (mCells[y + 1][x] == color)
+            {
                 ++count;
                 connectedFlags.On(x, y + 1);
                 SearchConnectedBlocks(x, y + 1, color, checkedFlags, connectedFlags, count);
@@ -176,10 +189,13 @@ void Board::SearchConnectedBlocks(int x, int y, BlockColor color, EraseFlags& ch
         }
     }
     //下
-    if ((y - 1) >= 0) {
-        if (!checkedFlags.IsOn(x, y - 1)) {//未チェック？
+    if ((y - 1) >= 0)
+    {
+        if (!checkedFlags.IsOn(x, y - 1)) //未チェック？
+        {
             checkedFlags.On(x, y - 1);
-            if (mCells[y - 1][x] == color) {
+            if (mCells[y - 1][x] == color)
+            {
                 ++count;
                 connectedFlags.On(x, y - 1);
                 SearchConnectedBlocks(x, y - 1, color, checkedFlags, connectedFlags, count);
@@ -187,10 +203,13 @@ void Board::SearchConnectedBlocks(int x, int y, BlockColor color, EraseFlags& ch
         }
     }
     //左
-    if ((x - 1) >= 0) {
-        if (!checkedFlags.IsOn(x - 1, y)) {//未チェック？
+    if ((x - 1) >= 0)
+    {
+        if (!checkedFlags.IsOn(x - 1, y)) //未チェック？
+        {
             checkedFlags.On(x - 1, y);
-            if (mCells[y][x - 1] == color) {
+            if (mCells[y][x - 1] == color)
+            {
                 ++count;
                 connectedFlags.On(x - 1, y);
                 SearchConnectedBlocks(x - 1, y, color, checkedFlags, connectedFlags, count);
@@ -198,10 +217,13 @@ void Board::SearchConnectedBlocks(int x, int y, BlockColor color, EraseFlags& ch
         }
     }
     //右
-    if ((x + 1) < WIDTH) {
-        if (!checkedFlags.IsOn(x + 1, y)) {//未チェック？
+    if ((x + 1) < WIDTH)
+    {
+        if (!checkedFlags.IsOn(x + 1, y)) //未チェック？
+        {
             checkedFlags.On(x + 1, y);
-            if (mCells[y][x + 1] == color) {
+            if (mCells[y][x + 1] == color)
+            {
                 ++count;
                 connectedFlags.On(x + 1, y);
                 SearchConnectedBlocks(x + 1, y, color, checkedFlags, connectedFlags, count);
@@ -213,9 +235,12 @@ void Board::SearchConnectedBlocks(int x, int y, BlockColor color, EraseFlags& ch
 //mEraseFlagsに従ってブロックを消す
 void Board::EraseBlocks()
 {
-    for (int y = 0; y < HEIGHT; y++) {
-        for (int x = 0; x < WIDTH; x++) {
-            if (mEraseFlags.IsOn(x, y)) {
+    for (int y = 0; y < HEIGHT; y++)
+    {
+        for (int x = 0; x < WIDTH; x++)
+        {
+            if (mEraseFlags.IsOn(x, y))
+            {
                 mCells[y][x] = BlockColor::Empty;
             }
         }
@@ -233,9 +258,13 @@ void Board::SearchCenterEraseBlock(int& x, int& y) const
     int maxX = 0;
     int minY = HEIGHT;
     int maxY = 0;
-    for (int iy = 0; iy < HEIGHT; iy++) {
-        for (int ix = 0; ix < WIDTH; ix++) {
-            if (mEraseFlags.IsOn(ix, iy)) {
+
+    for (int iy = 0; iy < HEIGHT; iy++)
+    {
+        for (int ix = 0; ix < WIDTH; ix++)
+        {
+            if (mEraseFlags.IsOn(ix, iy))
+            {
                 if (ix < minX) minX = ix;
                 if (ix > maxX) maxX = ix;
                 if (iy < minY) minY = iy;
@@ -250,9 +279,13 @@ void Board::SearchCenterEraseBlock(int& x, int& y) const
 int Board::CountEraseBlocks() const
 {
     int count = 0;
-    for (int y = 0; y < HEIGHT; y++) {
-        for (int x = 0; x < WIDTH; x++) {
-            if (mEraseFlags.IsOn(x, y)) {
+
+    for (int y = 0; y < HEIGHT; y++)
+    {
+        for (int x = 0; x < WIDTH; x++)
+        {
+            if (mEraseFlags.IsOn(x, y))
+            {
                 count++;
             }
         }
@@ -262,8 +295,10 @@ int Board::CountEraseBlocks() const
 
 void Board::Print() const
 {
-    for (int y = HEIGHT - 1; y >= 0; y--) {
-        for (int x = 0; x < WIDTH; x++) {
+    for (int y = HEIGHT - 1; y >= 0; y--)
+    {
+        for (int x = 0; x < WIDTH; x++)
+        {
             char c = '.';
             switch (mCells[y][x]) {
             case BlockColor::Red: c = 'r'; break;
