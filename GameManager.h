@@ -33,36 +33,25 @@ public:
     void GameOver();
     void GameClear();
 
-    const Board& GetBoard() const
-    {
-        return mPlayingManager.GetBoard();
-    }
+    const Board& GetBoard() const;
 
-    const FallingPair& GetFallingPair() const
-    {
-        return mPlayingManager.GetFallingPair();
-    }
-    const FallingPair& GetNextPair() const
-    {
-        return mPlayingManager.GetNextPair();
-    }
+    const FallingPair& GetFallingPair() const;
 
-    PlayState GetPlayState()const { return mPlayingManager.GetState(); }
+    const FallingPair& GetNextPair() const;
 
-    void SetRandomSeed(std::uint32_t randomSeed)
-    {
-        mPlayingManager.SetRandomSeed(randomSeed);
-    }
+    PlayState GetPlayState()const;
 
-    std::uint32_t GetRandomSeed()const { return mPlayingManager.GetRandomSeed(); }
+    void SetRandomSeed(std::uint32_t randomSeed);
 
-    int GetChainCount() const { return mPlayingManager.GetChainCount(); }
-    int GetScore() const { return mPlayingManager.GetScore(); }
+    std::uint32_t GetRandomSeed()const;
 
-    bool IsGameEventEmpty()const { return mGameEventManager.IsEmpty(); }
-    GameEvent PopGameEvent() { return mGameEventManager.Pop(); }
+    std::uint32_t GetChainCount() const;
+    std::uint32_t GetScore() const;
 
-    std::uint32_t GetAutoFallIntervalMs()const { return mPlayingManager.GetAutoFallIntervalMs(); }
-    std::uint32_t GetTotalEraseBlockCount()const { return mPlayingManager.GetTotalEraseBlockCount(); }
+    bool IsGameEventEmpty()const;
+    GameEvent PopGameEvent();
+
+    std::uint32_t GetAutoFallIntervalMs()const;
+    std::uint32_t GetTotalEraseBlockCount()const;
 
 };

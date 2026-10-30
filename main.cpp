@@ -1,31 +1,35 @@
-#include <iostream>
-#include <sstream>
-#include <cassert>
-#include <array>
 #include <chrono>
-#include <functional>
-#include <vector>
-#include <algorithm>
 #include <cstdint>
+#include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
+
+#include <cassert>
+// #include <array>
+// #include <functional>
+// #include <vector>
+// #include <algorithm>
 
 #include <SDL.h>
 
-#include "font8x8.h"
-
-#include "GameTypes.h"
-#include "FallingPair.h"
-#include "Board.h"
-#include "GameEvent.h"
-#include "InputManager.h"
-#include "PlayingManager.h"
 #include "GameManager.h"
 #include "Effect.h"
-
-#include "GameConfig.h"
-
 #include "Renderer.h"
+#include "GameConfig.h"
+#include "PcConfig.h"
+
+
+// #include "font8x8.h"
+
+// #include "GameTypes.h"
+// #include "FallingPair.h"
+// #include "Board.h"
+// #include "GameEvent.h"
+// #include "InputManager.h"
+// #include "PlayingManager.h"
+
+
 
 
 

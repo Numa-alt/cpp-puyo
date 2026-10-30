@@ -3,6 +3,9 @@
 #include "GameConfig.h"
 #include "font8x8.h"
 
+#include "PcConfig.h"
+
+
 int CalcBoardX(int ix)
 {
     return BoardOffsetX + ix * BlockSize;

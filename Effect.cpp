@@ -7,6 +7,9 @@
 #include "Renderer.h"
 #include "Effect.h"
 
+#include "PcConfig.h"
+
+
 std::uint32_t Effect::GetLifeTimeMs()const
 {
     return mLifeTimeMs;

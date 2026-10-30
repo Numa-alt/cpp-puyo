@@ -6,22 +6,12 @@
 static constexpr int HEIGHT = 12;
 static constexpr int WIDTH = 6;
 
-static const int FONT_SIZE = 8;
-static const int WINDOW_WIDTH = 320;
-static const int WINDOW_HEIGHT = 240;
-
-static const int BlockSize = 16;
-static const int BoardOffsetX = 8;
-static const int BoardOffsetY = 240 - 8 - BlockSize;
 
 static const std::uint32_t SpawnDelayMs = 300;
 static const std::uint32_t EraseCheckTimeMs = 10;
 static const std::uint32_t EraseDurationMs = 300;
 static const std::uint32_t DropTimeMs = 200;
 static const std::uint32_t InitialAutoFallIntervalMs = 1000;
-
-static const std::uint32_t ChainEffectDispTimeMs = 1500;
-static const std::uint32_t BlockEraseEffectTimeMs = 1500;
 
 //この個数を消すごとに落下速度が早くなる
 static const std::uint32_t EraseCountForSpeedUp = 4;
