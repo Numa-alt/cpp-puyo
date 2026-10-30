@@ -367,6 +367,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="C:\Users\Numashita\cpp-study\cpp-puyo\main.cpp" />
+    <ClCompile Include="C:\Users\Numashita\cpp-study\cpp-puyo\Board.cpp" />
     <ClCompile Include="C:\Users\Numashita\cpp-study\cpp-puyo\font8x8.cpp" />
   </ItemGroup>
   <ItemGroup>
