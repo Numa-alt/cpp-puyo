@@ -13,12 +13,16 @@ add_executable(cpp_puyo
     Board.cpp
     InputManager.cpp
     PlayingManager.cpp
+    GameManager.cpp
+    Effect.cpp
+    Renderer.cpp
     font8x8.cpp
 )
 
 if(MSVC)
     target_compile_options(cpp_puyo PRIVATE
         /W4
+        /utf-8
     )
 else()
     target_compile_options(cpp_puyo PRIVATE

@@ -13,6 +13,15 @@
     <ClCompile Include="C:\Users\Numashita\cpp-study\cpp-puyo\PlayingManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\Numashita\cpp-study\cpp-puyo\GameManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Numashita\cpp-study\cpp-puyo\Effect.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Numashita\cpp-study\cpp-puyo\Renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\Numashita\cpp-study\cpp-puyo\font8x8.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

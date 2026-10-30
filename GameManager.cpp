@@ -1,0 +1,84 @@
+#include "GameManager.h"
+
+void GameManager::SetState(GameState next)
+{
+    if (next == GameState::Playing)
+    {
+        mPlayingManager.Start(mSystemTimeMs, mGameEventManager);
+    }
+    mGameState = next;
+}
+
+void GameManager::Execute(std::uint32_t systemTimeMs, std::uint32_t held)
+{
+    mSystemTimeMs = systemTimeMs;
+
+    mInputManager.Execute(mSystemTimeMs, held);
+
+    switch (mGameState)
+    {
+    case GameState::Title:
+        Title();
+        break;
+
+    case GameState::Playing:
+        Playing(mSystemTimeMs);
+        break;
+
+    case GameState::GameOver:
+        GameOver();
+        break;
+
+    case GameState::GameClear:
+        GameClear();
+        break;
+    }
+}
+
+// タイトル
+void GameManager::Title()
+{
+    if (mInputManager.IsPressed(Button::Rotate))
+    {
+        SetState(GameState::Playing);
+    }
+}
+// ゲーム中
+void GameManager::Playing(std::uint32_t systemTimeMs)
+{
+    mPlayingManager.Execute(mInputManager, systemTimeMs, mGameEventManager);
+
+    GameResult result = mPlayingManager.GetGameResult();
+    switch (result)
+    {
+    case GameResult::Playing:
+        break;
+
+    case GameResult::GameOver:
+        SetState(GameState::GameOver);
+        break;
+
+    case GameResult::GameClear:
+        SetState(GameState::GameClear);
+        break;
+    }
+}
+// ゲームオーバー
+void GameManager::GameOver()
+{
+    if (mInputManager.IsPressed(Button::Rotate))
+    {
+        // タイトルへ
+        SetState(GameState::Title);
+    }
+}
+// ゲームクリア
+void GameManager::GameClear()
+{
+    if (mInputManager.IsPressed(Button::Rotate))
+    {
+        // タイトルへ
+        SetState(GameState::Title);
+    }
+}
+
