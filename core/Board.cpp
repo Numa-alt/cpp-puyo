@@ -1,7 +1,6 @@
 #include "Board.h"
 
 #include <cassert>
-#include <iostream>
 
 //1ブロック配置
 void Board::PutOne(int x, int y, BlockColor color)
