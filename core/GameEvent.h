@@ -76,4 +76,9 @@ public:
         }
         return gameEvent;
     }
+
+    std::size_t GetEnd()const
+    {
+        return mEnd;
+    }
 };

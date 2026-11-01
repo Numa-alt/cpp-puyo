@@ -88,4 +88,6 @@ public:
     //真ん中あたりの消えるブロックの位置を取得する
     void SearchCenterEraseBlock(int& x, int& y) const;
 
+    void Fill(BlockColor color);
+
 };

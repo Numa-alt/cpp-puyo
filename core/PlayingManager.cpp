@@ -358,6 +358,9 @@ void PlayingManager::Land(GameEventManager& gameEventManager)
 {
     mBoard.PutPair(mFallingPair);
 
+    mFallingPair.SetColor(0, BlockColor::Empty);
+    mFallingPair.SetColor(1, BlockColor::Empty);
+
     if (!mBoard.HasFloatingBlocks())//浮いているブロックがない？
     {
         //浮いているブロックがないので消えるブロックがあるかチェック

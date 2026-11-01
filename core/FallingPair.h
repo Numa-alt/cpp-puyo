@@ -33,6 +33,42 @@ public:
     {
         return mY;
     }
+    int GetPairX() const
+    {
+        int x = mX;
+        switch (mDirection)
+        {
+        case Direction::Down:
+            break;
+        case Direction::Left:
+            --x;
+            break;
+        case Direction::Up:
+            break;
+        case Direction::Right:
+            ++x;
+            break;
+        }
+        return x;
+    }
+    int GetPairY() const
+    {
+        int y = mY;
+        switch (mDirection)
+        {
+        case Direction::Down:
+            --y;
+            break;
+        case Direction::Left:
+            break;
+        case Direction::Up:
+            ++y;
+            break;
+        case Direction::Right:
+            break;
+        }
+        return y;
+    }
     void SetDirection(Direction next)
     {
         mDirection = next;

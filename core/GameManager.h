@@ -54,4 +54,6 @@ public:
     std::uint32_t GetAutoFallIntervalMs()const;
     std::uint32_t GetTotalEraseBlockCount()const;
 
+    std::size_t GetGameEventEnd()const;
+
 };

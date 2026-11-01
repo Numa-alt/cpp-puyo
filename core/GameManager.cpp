@@ -141,3 +141,7 @@ GameState GameManager::GetState() const
 {
     return mGameState;
 }
+std::size_t GameManager::GetGameEventEnd()const
+{
+    return mGameEventManager.GetEnd();
+}

@@ -26,6 +26,7 @@ void Board::PutPair(const FallingPair& pair)
     case Direction::Right: x++;  break;
     }
     mCells[y][x] = pair.GetColor(1);
+
 }
 //配置できる？
 bool Board::CanPlace(const FallingPair& pair) const
@@ -295,4 +296,14 @@ std::uint32_t Board::CountEraseBlocks() const
 BlockColor Board::GetColor(int x, int y) const
 {
     return mCells[y][x];
+}
+void Board::Fill(BlockColor color)
+{
+    for (int y = 0; y < HEIGHT; y++)
+    {
+        for (int x = 0; x < WIDTH; x++)
+        {
+            mCells[y][x] = color;
+        }
+    }
 }
