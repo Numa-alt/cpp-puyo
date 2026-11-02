@@ -181,6 +181,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <Project>{CB6CD7E7-185D-3250-BB55-F3EE42734C38}</Project>
       <Name>puyo_core</Name>
     </ProjectReference>
+    <ProjectReference Include="C:\Users\Numashita\cpp-study\cpp-puyo\build-win\test_board.vcxproj">
+      <Project>{8A459D29-0243-3478-BEB0-2CE9E1D6CBD9}</Project>
+      <Name>test_board</Name>
+    </ProjectReference>
     <ProjectReference Include="C:\Users\Numashita\cpp-study\cpp-puyo\build-win\test_game_event.vcxproj">
       <Project>{8BFEFEBC-B1FF-3042-8F23-E82A44263A81}</Project>
       <Name>test_game_event</Name>

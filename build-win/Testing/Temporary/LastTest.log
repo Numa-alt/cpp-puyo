@@ -1,18 +1,33 @@
-Start testing: Nov 02 14:48 東京 (標準時)
+Start testing: Nov 02 16:04 東京 (標準時)
 ----------------------------------------------------------
-1/1 Testing: GameEventTest
-1/1 Test: GameEventTest
+1/2 Testing: GameEventTest
+1/2 Test: GameEventTest
 Command: "C:/Users/Numashita/cpp-study/cpp-puyo/build-win/Debug/test_game_event.exe"
 Directory: C:/Users/Numashita/cpp-study/cpp-puyo/build-win
-"GameEventTest" start time: Nov 02 14:48 東京 (標準時)
+"GameEventTest" start time: Nov 02 16:04 東京 (標準時)
 Output:
 ----------------------------------------------------------
 <end of output>
-Test time =   0.18 sec
+Test time =   0.02 sec
 ----------------------------------------------------------
 Test Passed.
-"GameEventTest" end time: Nov 02 14:48 東京 (標準時)
+"GameEventTest" end time: Nov 02 16:04 東京 (標準時)
 "GameEventTest" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Nov 02 14:48 東京 (標準時)
+2/2 Testing: BoardTest
+2/2 Test: BoardTest
+Command: "C:/Users/Numashita/cpp-study/cpp-puyo/build-win/Debug/test_board.exe"
+Directory: C:/Users/Numashita/cpp-study/cpp-puyo/build-win
+"BoardTest" start time: Nov 02 16:04 東京 (標準時)
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.26 sec
+----------------------------------------------------------
+Test Passed.
+"BoardTest" end time: Nov 02 16:04 東京 (標準時)
+"BoardTest" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 02 16:04 東京 (標準時)

@@ -65,3 +65,19 @@ add_test(
     NAME GameEventTest
     COMMAND test_game_event
 )
+
+
+add_executable(test_board
+    tests/test_board.cpp
+    )
+
+    target_link_libraries(test_board PRIVATE
+        puyo_core
+    )
+
+target_compile_options(test_board PRIVATE ${PUYO_WARN_FLAGS})
+
+add_test(
+    NAME BoardTest
+    COMMAND test_board
+)
