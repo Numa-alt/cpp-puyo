@@ -42,7 +42,7 @@ private:
     //
     std::uint32_t mSystemTimeMs = 0;
 
-    void PushEvent(GameEventManager& mgr, GameEventType type, int x, int y, std::uint32_t chainCount, BlockColor color);
+    void PushEvent(GameEventManager& mgr, GameEventType type, int x, int y, std::uint16_t value);
 
 public:
     void Start(std::uint32_t systemTimeMs, GameEventManager& gameEventManager);

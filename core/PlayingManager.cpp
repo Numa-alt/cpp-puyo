@@ -182,7 +182,7 @@ void PlayingManager::SetState(PlayState next, GameEventManager& gameEventManager
                         if (mBoard.IsEraseBlock(ix, iy)) {
                             BlockColor color = mBoard.GetColor(ix, iy);
                             std::uint32_t chainCount = 0;
-                            PushEvent(gameEventManager, GameEventType::BlockErased, ix, iy, chainCount, color);
+                            PushEvent(gameEventManager, GameEventType::BlockErased, ix, iy, static_cast<std::uint16_t>(color));
                         }
                     }
                 }
@@ -194,7 +194,7 @@ void PlayingManager::SetState(PlayState next, GameEventManager& gameEventManager
                 int y = 0;
                 //真ん中あたりの消えるブロックの位置を取得する
                 mBoard.SearchCenterEraseBlock(x, y);
-                PushEvent(gameEventManager, GameEventType::Chain, x, y, mChainCount, BlockColor::Empty);
+                PushEvent(gameEventManager, GameEventType::Chain, x, y, static_cast<std::uint16_t>(mChainCount));
             }
 
             break;
@@ -204,9 +204,9 @@ void PlayingManager::SetState(PlayState next, GameEventManager& gameEventManager
     }
 }
 
-void PlayingManager::PushEvent(GameEventManager& mgr, GameEventType type, int x, int y, std::uint32_t chainCount, BlockColor color)
+void PlayingManager::PushEvent(GameEventManager& mgr, GameEventType type, int x, int y, std::uint16_t value)
 {
-    [[maybe_unused]] bool success = mgr.Push(type, x, y, chainCount, color);
+    [[maybe_unused]] bool success = mgr.Push(type, x, y, value);
     assert(success);
 }
 

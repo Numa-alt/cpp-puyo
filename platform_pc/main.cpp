@@ -132,20 +132,20 @@ int main(int, char* [])
         {
             while (!gameManager.IsGameEventEmpty()) {
                 auto ge = gameManager.PopGameEvent();
-                switch (ge.mEventType) {
+                switch (ge.GetType()) {
                 case GameEventType::Chain:
                     {
-                        int x = CalcBoardX(ge.mX);
-                        int y = CalcBoardY(ge.mY);
-                        std::unique_ptr<EffectChain> effectChain = std::make_unique<EffectChain>(x, y, ChainEffectDispTimeMs, systemTimeMs, ge.mChainCount);
+                        int x = CalcBoardX(ge.GetX());
+                        int y = CalcBoardY(ge.GetY());
+                        std::unique_ptr<EffectChain> effectChain = std::make_unique<EffectChain>(x, y, ChainEffectDispTimeMs, systemTimeMs, ge.GetValue());
                         effectManager.AddEffect(std::move(effectChain));
                         break;
                     }
                 case GameEventType::BlockErased:
                     {
-                        int x = CalcBoardX(ge.mX) + BlockSize / 2;
-                        int y = CalcBoardY(ge.mY) + BlockSize / 2;
-                        std::unique_ptr<EffectBlockErase> effectEraseBlock = std::make_unique<EffectBlockErase>(x, y, ge.mBlockColor, BlockEraseEffectTimeMs, systemTimeMs);
+                        int x = CalcBoardX(ge.GetX()) + BlockSize / 2;
+                        int y = CalcBoardY(ge.GetY()) + BlockSize / 2;
+                        std::unique_ptr<EffectBlockErase> effectEraseBlock = std::make_unique<EffectBlockErase>(x, y, static_cast<BlockColor>(ge.GetValue()), BlockEraseEffectTimeMs, systemTimeMs);
                         effectManager.AddEffect(std::move(effectEraseBlock));
                         break;
                     }
