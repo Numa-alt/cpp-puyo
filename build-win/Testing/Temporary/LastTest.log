@@ -1,33 +1,48 @@
-Start testing: Nov 02 16:04 東京 (標準時)
+Start testing: Nov 02 16:30 東京 (標準時)
 ----------------------------------------------------------
-1/2 Testing: GameEventTest
-1/2 Test: GameEventTest
+1/3 Testing: GameEventTest
+1/3 Test: GameEventTest
 Command: "C:/Users/Numashita/cpp-study/cpp-puyo/build-win/Debug/test_game_event.exe"
 Directory: C:/Users/Numashita/cpp-study/cpp-puyo/build-win
-"GameEventTest" start time: Nov 02 16:04 東京 (標準時)
+"GameEventTest" start time: Nov 02 16:30 東京 (標準時)
 Output:
 ----------------------------------------------------------
 <end of output>
-Test time =   0.02 sec
+Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"GameEventTest" end time: Nov 02 16:04 東京 (標準時)
+"GameEventTest" end time: Nov 02 16:30 東京 (標準時)
 "GameEventTest" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-2/2 Testing: BoardTest
-2/2 Test: BoardTest
+2/3 Testing: BoardTest
+2/3 Test: BoardTest
 Command: "C:/Users/Numashita/cpp-study/cpp-puyo/build-win/Debug/test_board.exe"
 Directory: C:/Users/Numashita/cpp-study/cpp-puyo/build-win
-"BoardTest" start time: Nov 02 16:04 東京 (標準時)
+"BoardTest" start time: Nov 02 16:30 東京 (標準時)
 Output:
 ----------------------------------------------------------
 <end of output>
-Test time =   0.26 sec
+Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"BoardTest" end time: Nov 02 16:04 東京 (標準時)
+"BoardTest" end time: Nov 02 16:30 東京 (標準時)
 "BoardTest" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Nov 02 16:04 東京 (標準時)
+3/3 Testing: InputTest
+3/3 Test: InputTest
+Command: "C:/Users/Numashita/cpp-study/cpp-puyo/build-win/Debug/test_input.exe"
+Directory: C:/Users/Numashita/cpp-study/cpp-puyo/build-win
+"InputTest" start time: Nov 02 16:30 東京 (標準時)
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.17 sec
+----------------------------------------------------------
+Test Passed.
+"InputTest" end time: Nov 02 16:30 東京 (標準時)
+"InputTest" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 02 16:30 東京 (標準時)

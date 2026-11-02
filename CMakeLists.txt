@@ -81,3 +81,21 @@ add_test(
     NAME BoardTest
     COMMAND test_board
 )
+
+
+add_executable(test_input
+    tests/test_input.cpp
+    )
+
+    target_link_libraries(test_input PRIVATE
+        puyo_core
+    )
+
+target_compile_options(test_input PRIVATE ${PUYO_WARN_FLAGS})
+
+add_test(
+    NAME InputTest
+    COMMAND test_input
+)
+
+
