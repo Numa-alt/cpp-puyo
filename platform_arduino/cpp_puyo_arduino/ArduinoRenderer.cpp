@@ -6,6 +6,16 @@ static const int gBoardOffsetX = 8;
 static const int gBoardOffsetY = 48;
 static const int gBlockSize = 16;
 
+int CalcBoardX(int ix)
+{
+    return gBoardOffsetX + ix * gBlockSize;
+}
+int CalcBoardY(int iy)
+{
+    return gBoardOffsetY - iy * gBlockSize;
+}
+
+
 void ClearScreen()
 {
     std::uint16_t dark_glay = 8 | (8 << 5) | (8 << 10);

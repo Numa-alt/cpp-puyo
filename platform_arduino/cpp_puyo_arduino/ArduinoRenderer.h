@@ -6,6 +6,10 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
 
+int CalcBoardX(int ix);
+int CalcBoardY(int iy);
+
+
 void DrawTitle();
 void DrawGameOver();
 void DrawGameClear();

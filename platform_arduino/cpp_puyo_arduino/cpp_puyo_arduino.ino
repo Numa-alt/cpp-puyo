@@ -193,8 +193,6 @@ void loop()
             //Score
             DrawScore(8, 2, gameManager.GetScore());
 
-            DrawTotal(120, 80, gameManager.GetGameEventEnd());
-
             if (gameManager.GetPlayState() != PlayState::Control)
             {
                 gBoardBefore = gameManager.GetBoard();
@@ -208,8 +206,8 @@ void loop()
                     switch (ge.mEventType) {
                     case GameEventType::Chain:
                         {
-                            // int x = CalcBoardX(ge.mX);
-                            // int y = CalcBoardY(ge.mY);
+                            int x = CalcBoardX(ge.mX);
+                            int y = CalcBoardY(ge.mY);
                             // std::unique_ptr<EffectChain> effectChain = std::make_unique<EffectChain>(x, y, ChainEffectDispTimeMs, systemTimeMs, ge.mChainCount);
                             // effectManager.AddEffect(std::move(effectChain));
                             break;
