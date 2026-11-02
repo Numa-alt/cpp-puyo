@@ -13,28 +13,39 @@ enum class GameEventType {
     GameOver,
 };
 
-// 16bit packed GameEvent
-//
-// bit:  FEDCBA9876543210
-//       EEEXXXYYYYVVVVVV
-//
-// E : GameEventType  3bit
-// X : X coordinate    3bit
-// Y : Y coordinate    4bit
-// V : value           6bit
-//
-// value の意味はイベント種別によって変わる。
-//   BlockErased : BlockColor
-//   Chain       : chain count
-//   GameOver    : unused
-//
-// 範囲:
-//   type  : 0 - 7
-//   x     : 0 - 7   (実際には 0 - WIDTH-1)
-//   y     : 0 - 15  (実際には 0 - HEIGHT-1)
-//   value : 0 - 63
 
 struct GameEvent {
+
+    // 16bit packed GameEvent
+    //
+    // bit:  FEDCBA9876543210
+    //       EEEXXXYYYYVVVVVV
+    //
+    // E : GameEventType  3bit
+    // X : X coordinate    3bit
+    // Y : Y coordinate    4bit
+    // V : value           6bit
+    //
+    // value の意味はイベント種別によって変わる。
+    //   BlockErased : BlockColor
+    //   Chain       : chain count
+    //   GameOver    : unused
+    //
+    // 範囲:
+    //   type  : 0 - 7
+    //   x     : 0 - 7   (実際には 0 - WIDTH-1)
+    //   y     : 0 - 15  (実際には 0 - HEIGHT-1)
+    //   value : 0 - 63
+
+    static const std::uint16_t ShiftType = 13;
+    static const std::uint16_t ShiftX = 10;
+    static const std::uint16_t ShiftY = 6;
+    static const std::uint16_t ShiftValue = 0;
+
+    static const std::uint16_t MaskType = 0x7 << ShiftType;
+    static const std::uint16_t MaskX = 0x7 << ShiftX;
+    static const std::uint16_t MaskY = 0xF << ShiftY;
+    static const std::uint16_t MaskValue = 0x3F << ShiftValue;
 
     std::uint16_t mData{};
 
@@ -53,16 +64,6 @@ struct GameEvent {
         SetY(y);
         SetValue(value);
     }
-
-    static const std::uint16_t ShiftType = 13;
-    static const std::uint16_t ShiftX = 10;
-    static const std::uint16_t ShiftY = 6;
-    static const std::uint16_t ShiftValue = 0;
-
-    static const std::uint16_t MaskType = 0x7 << ShiftType;
-    static const std::uint16_t MaskX = 0x7 << ShiftX;
-    static const std::uint16_t MaskY = 0xF << ShiftY;
-    static const std::uint16_t MaskValue = 0x3F << ShiftValue;
 
     void SetType(GameEventType type)
     {
