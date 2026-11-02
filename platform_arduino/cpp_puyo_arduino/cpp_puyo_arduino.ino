@@ -203,11 +203,11 @@ void loop()
             {
                 while (!gameManager.IsGameEventEmpty()) {
                     auto ge = gameManager.PopGameEvent();
-                    switch (ge.mEventType) {
+                    switch (ge.GetType()) {
                     case GameEventType::Chain:
                         {
-                            int x = CalcBoardX(ge.mX);
-                            int y = CalcBoardY(ge.mY);
+                            int x = CalcBoardX(ge.GetX());
+                            int y = CalcBoardY(ge.GetY());
                             // std::unique_ptr<EffectChain> effectChain = std::make_unique<EffectChain>(x, y, ChainEffectDispTimeMs, systemTimeMs, ge.mChainCount);
                             // effectManager.AddEffect(std::move(effectChain));
                             break;

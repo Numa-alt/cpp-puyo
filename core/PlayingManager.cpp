@@ -181,7 +181,6 @@ void PlayingManager::SetState(PlayState next, GameEventManager& gameEventManager
                     for (int iy = 0; iy < HEIGHT; iy++) {
                         if (mBoard.IsEraseBlock(ix, iy)) {
                             BlockColor color = mBoard.GetColor(ix, iy);
-                            std::uint32_t chainCount = 0;
                             PushEvent(gameEventManager, GameEventType::BlockErased, ix, iy, static_cast<std::uint16_t>(color));
                         }
                     }

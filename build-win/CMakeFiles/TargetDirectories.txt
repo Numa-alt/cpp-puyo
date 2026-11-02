@@ -1,4 +1,6 @@
 C:/Users/Numashita/cpp-study/cpp-puyo/build-win/CMakeFiles/puyo_core.dir
 C:/Users/Numashita/cpp-study/cpp-puyo/build-win/CMakeFiles/cpp_puyo.dir
+C:/Users/Numashita/cpp-study/cpp-puyo/build-win/CMakeFiles/test_game_event.dir
+C:/Users/Numashita/cpp-study/cpp-puyo/build-win/CMakeFiles/RUN_TESTS.dir
 C:/Users/Numashita/cpp-study/cpp-puyo/build-win/CMakeFiles/ALL_BUILD.dir
 C:/Users/Numashita/cpp-study/cpp-puyo/build-win/CMakeFiles/ZERO_CHECK.dir

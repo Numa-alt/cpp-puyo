@@ -181,6 +181,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <Project>{CB6CD7E7-185D-3250-BB55-F3EE42734C38}</Project>
       <Name>puyo_core</Name>
     </ProjectReference>
+    <ProjectReference Include="C:\Users\Numashita\cpp-study\cpp-puyo\build-win\test_game_event.vcxproj">
+      <Project>{8BFEFEBC-B1FF-3042-8F23-E82A44263A81}</Project>
+      <Name>test_game_event</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

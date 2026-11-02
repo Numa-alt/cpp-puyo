@@ -1,0 +1,18 @@
+Start testing: Nov 02 14:48 東京 (標準時)
+----------------------------------------------------------
+1/1 Testing: GameEventTest
+1/1 Test: GameEventTest
+Command: "C:/Users/Numashita/cpp-study/cpp-puyo/build-win/Debug/test_game_event.exe"
+Directory: C:/Users/Numashita/cpp-study/cpp-puyo/build-win
+"GameEventTest" start time: Nov 02 14:48 東京 (標準時)
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.18 sec
+----------------------------------------------------------
+Test Passed.
+"GameEventTest" end time: Nov 02 14:48 東京 (標準時)
+"GameEventTest" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 02 14:48 東京 (標準時)

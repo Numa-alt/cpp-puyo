@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(cpp_puyo CXX)
 
+enable_testing()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -47,4 +49,19 @@ target_link_libraries(cpp_puyo PRIVATE
     puyo_core
     SDL2::SDL2main
     SDL2::SDL2
+)
+
+add_executable(test_game_event
+    tests/test_game_event.cpp
+)
+
+target_link_libraries(test_game_event PRIVATE
+    puyo_core
+)
+
+target_compile_options(test_game_event PRIVATE ${PUYO_WARN_FLAGS})
+
+add_test(
+    NAME GameEventTest
+    COMMAND test_game_event
 )
