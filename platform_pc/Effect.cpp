@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <string>
+#include <iostream>
 
 #include "GameConfig.h"
 #include "Renderer.h"
@@ -19,6 +20,11 @@ std::uint32_t Effect::GetStartTimeMs()const
     return mStartTimeMs;
 }
 
+/*
+    停止開始時の残り割合を保存
+    再開時、残り割合からstartTimeMsとmLifeTimeMsを再設定
+ */
+
 float Effect::CalcRate(std::uint32_t systemTimeMs) const
 {
     float nowMs = static_cast<float>(systemTimeMs) - static_cast<float>(mStartTimeMs);
@@ -31,33 +37,106 @@ float Effect::CalcRate(std::uint32_t systemTimeMs) const
     }
     return rate;
 }
+bool Effect::GetPause()const
+{
+    return mPause;
+}
+void Effect::SetPause(bool pause)
+{
+    mPause = pause;
+}
+void Effect::SetPauseTimeMs(std::uint32_t pauseTimeMs)
+{
+    mPauseTimeMs = pauseTimeMs;
+}
+std::uint32_t Effect::GetPauseTimeMs()const
+{
+    return mPauseTimeMs;
+}
+void Effect::SetRate(float rate)
+{
+    mRate = rate;
+}
+float Effect::GetRate() const
+{
+    return mRate;
+}
+void Effect::SetStartTimeMs(std::uint32_t startTimeMs)
+{
+    mStartTimeMs = startTimeMs;
+}
 
 void EffectManager::AddEffect(std::unique_ptr<Effect> effect)
 {
     mEffects.push_back(std::move(effect));
 }
 
-void EffectManager::Execute(std::uint32_t systemTimeMs)
+void EffectManager::Execute(std::uint32_t systemTimeMs, bool isPause)
 {
     for (auto& e : mEffects)
     {
+        if (isPause)
+        {
+            if (e->GetPause())
+            {
+                float rate = e->GetRate();
+                std::uint32_t newStartTimeMs = systemTimeMs - e->GetLifeTimeMs() * (rate);
+                e->SetStartTimeMs(newStartTimeMs);
+            }
+            else
+            {
+                e->SetPause(true);
+                e->SetPauseTimeMs(systemTimeMs);
+                float rate = e->CalcRate(systemTimeMs);
+                e->SetRate(rate);
+                // std::cout << "Pause! rate " << rate << "\n";
+            }
+        }
+        else {
+            if (e->GetPause())
+            {
+                e->SetPause(false);
+                // float rate = e->GetRate();
+                // std::uint32_t newStartTimeMs = static_cast<std::uint32_t>((float)systemTimeMs - (float)e->GetLifeTimeMs() * (1.0f - rate));
+                // int tt = (int)((float)(e->GetLifeTimeMs()) * (1.0f - rate));
+                // std::uint32_t oldStartTimeMs = e->GetStartTimeMs();
+                // //      e->SetStartTimeMs(newStartTimeMs);
+                // float newRate = e->CalcRate(systemTimeMs);
+                // std::cout << "Resume! rate " << rate << " new r ate " << rate << " tt " << tt << "\n";
+                // std::cout << "startTime " << oldStartTimeMs << " -> " << newStartTimeMs << "\n";
+            }
+            else
+            {
+
+            }
+        }
+
         e->Execute(systemTimeMs);
     }
 
     //終了処理
-    auto it = std::remove_if(mEffects.begin(), mEffects.end(), [systemTimeMs](std::unique_ptr<Effect>& e)
-        {
-            return (systemTimeMs - e->GetStartTimeMs()) > e->GetLifeTimeMs();
-        });
-    mEffects.erase(it, mEffects.end());
+    if (!isPause) {
+        auto it = std::remove_if(mEffects.begin(), mEffects.end(), [systemTimeMs](std::unique_ptr<Effect>& e)
+            {
+                return (systemTimeMs - e->GetStartTimeMs()) > e->GetLifeTimeMs();
+            });
+        mEffects.erase(it, mEffects.end());
+
+    }
 }
 
 void EffectManager::Draw(SDL_Renderer* renderer)const
 {
+
     for (const auto& e : mEffects)
     {
         e->Draw(renderer);
     }
+}
+
+std::size_t EffectManager::GetCount() const
+{
+    return mEffects.size();
 }
 
 EffectBlockErase::EffectBlockErase(
@@ -109,6 +188,9 @@ EffectChain::EffectChain(int x, int y, std::uint32_t lifeTimeMs, std::uint32_t s
 void EffectChain::Execute(std::uint32_t systemTimeMs)
 {
     float rate = CalcRate(systemTimeMs);
+
+    // std::cout << "RATE " << rate << " ST " << GetStartTimeMs() << "\n";
+
     mAlpha = static_cast<std::uint32_t>(255 - 255 * rate) & 0xFF;
     mOffsetY = static_cast<int>(32 - 32 * rate);
     static const std::array<std::uint32_t, 5> colorTbl = {

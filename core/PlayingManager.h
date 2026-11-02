@@ -16,6 +16,7 @@ private:
     std::uint32_t mChainCount = 0;
     std::uint32_t mScore = 0;
     GameResult mGameResult = GameResult::Playing;
+    bool mPause = false;
 
     std::uint32_t mTotalEraseBlockCount = 0;//全部で何個消したか
     std::uint32_t mEraseBlockCountForSpeedUp = 0;//落下速度を加速させるための消したブロックのカウンタ
@@ -41,6 +42,8 @@ private:
 
     //
     std::uint32_t mSystemTimeMs = 0;
+
+    std::uint32_t mPauseStartTimeMs = 0;
 
     void PushEvent(GameEventManager& mgr, GameEventType type, int x, int y, std::uint16_t value);
 
@@ -91,5 +94,7 @@ public:
 
     std::uint32_t GetAutoFallIntervalMs() const;
     std::uint32_t GetTotalEraseBlockCount() const;
+
+    bool IsPause()const;
 };
 

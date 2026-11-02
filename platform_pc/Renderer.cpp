@@ -204,6 +204,18 @@ void DrawPlaying(SDL_Renderer* renderer, const GameManager& gameManager)
         DrawString(renderer, x, y + FONT_SIZE, str, 1, 0xFFFFFFFF, false);
     }
 
+    if (gameManager.IsPause())
+    {
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0x80);
+        SDL_Rect rect{
+            0,0,WINDOW_WIDTH,WINDOW_HEIGHT
+        };
+        SDL_RenderFillRect(renderer, &rect);
+        int x = 64;
+        int y = 144;
+        DrawString(renderer, x, y + FONT_SIZE, "PAUSE", 1, 0xFFFFFFFF, false);
+    }
+
 }
 
 void DrawGameOver(SDL_Renderer* renderer)

@@ -79,11 +79,15 @@ void PlayingManager::Start(std::uint32_t systemTimeMs, GameEventManager& gameEve
 
     mSpawnStartTimeMs = 0;
 
+    mPauseStartTimeMs = 0;
+
     mSystemTimeMs = systemTimeMs;
 
     GenerateNextPair();
 
     SetState(PlayState::Spawn, gameEventManager);
+
+    mPause = false;
 }
 
 //落下時間計測のタイマーをリセット
@@ -208,9 +212,36 @@ void PlayingManager::PushEvent(GameEventManager& mgr, GameEventType type, int x,
     [[maybe_unused]] bool success = mgr.Push(type, x, y, value);
     assert(success);
 }
-
+bool PlayingManager::IsPause()const
+{
+    return mPause;
+}
 void PlayingManager::Execute(const InputManager& input, std::uint32_t systemTimeMs, GameEventManager& gameEventManager)
 {
+    if (input.IsPressed(Button::Up))
+    {
+        if (mPause)
+        {
+            std::uint32_t addTimeMs = (systemTimeMs - mPauseStartTimeMs);
+            mSpawnStartTimeMs += addTimeMs;
+            mDropStartTimeMs += addTimeMs;
+            mEraseCheckTimeMs += addTimeMs;
+            mEraseStartTimeMs += addTimeMs;
+            mLastAutoFallTimeMs += addTimeMs;
+
+            mSystemTimeMs = systemTimeMs;
+        }
+        else
+        {
+            mPauseStartTimeMs = systemTimeMs;
+        }
+        mPause = !mPause;
+    }
+    if (mPause)
+    {
+        return;
+    }
+
     mSystemTimeMs = systemTimeMs;
     switch (mState)
     {

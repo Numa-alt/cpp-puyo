@@ -99,6 +99,9 @@ int main(int, char* [])
         if (keyState[SDL_SCANCODE_DOWN]) {
             held |= ButtonBit(Button::Down);
         }
+        if (keyState[SDL_SCANCODE_UP]) {
+            held |= ButtonBit(Button::Up);
+        }
         if (keyState[SDL_SCANCODE_SPACE]) {
             held |= ButtonBit(Button::Rotate);
         }
@@ -157,7 +160,7 @@ int main(int, char* [])
             }
         }
 
-        effectManager.Execute(systemTimeMs);
+        effectManager.Execute(systemTimeMs, gameManager.IsPause());
 
         DrawScreen(renderer, gameManager, effectManager);
     }

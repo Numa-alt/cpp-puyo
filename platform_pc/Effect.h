@@ -13,6 +13,9 @@ class Effect
 private:
     std::uint32_t mLifeTimeMs = 0;
     std::uint32_t mStartTimeMs = 0;
+    bool mPause = false;
+    std::uint32_t mPauseTimeMs = 0;
+    float mRate = 0.0f;
 public:
     Effect(std::uint32_t lifeTimeMs, std::uint32_t startTimeMs) :mLifeTimeMs(lifeTimeMs), mStartTimeMs(startTimeMs)
     {
@@ -25,8 +28,16 @@ public:
 
     std::uint32_t GetLifeTimeMs() const;
     std::uint32_t GetStartTimeMs() const;
+    void SetStartTimeMs(std::uint32_t startTimeMs);
 
     float CalcRate(std::uint32_t systemTimeMs) const;
+
+    bool GetPause()const;
+    void SetPause(bool pause);
+    void SetPauseTimeMs(std::uint32_t pauseTimeMs);
+    std::uint32_t GetPauseTimeMs()const;
+    void SetRate(float rate);
+    float GetRate() const;
 };
 
 
@@ -37,9 +48,11 @@ private:
 public:
     void AddEffect(std::unique_ptr<Effect> effect);
 
-    void Execute(std::uint32_t systemTimeMs);
+    void Execute(std::uint32_t systemTimeMs, bool isPause);
 
     void Draw(SDL_Renderer* renderer) const;
+
+    std::size_t GetCount() const;
 };
 
 //ブロック消去エフェクト

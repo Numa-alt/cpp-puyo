@@ -56,4 +56,6 @@ public:
 
     std::size_t GetGameEventEnd()const;
 
+    bool IsPause() const;
+
 };

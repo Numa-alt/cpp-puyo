@@ -59,6 +59,7 @@ enum class Button
     Left,
     Right,
     Down,
+    Up,
     Max
 };
 

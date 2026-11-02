@@ -79,6 +79,7 @@ struct InputState
     bool left;
     bool right;
     bool down;
+    bool up;
     bool rotate;
 };
 
@@ -103,6 +104,10 @@ InputState ReadInput()
     {
         is.down = true;
     }
+    if (y < 512 - 120)
+    {
+        is.up = true;
+    }
 
     std::uint32_t buttons = ss.digitalReadBulk(button_mask);
 
@@ -126,6 +131,10 @@ std::uint32_t GetHeld()
     if (is.down)
     {
         held |= ButtonBit(Button::Down);
+    }
+    if (is.up)
+    {
+        held |= ButtonBit(Button::Up);
     }
     if (is.rotate) {
         held |= ButtonBit(Button::Rotate);

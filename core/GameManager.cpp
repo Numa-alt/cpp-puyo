@@ -145,3 +145,8 @@ std::size_t GameManager::GetGameEventEnd()const
 {
     return mGameEventManager.GetEnd();
 }
+
+bool GameManager::IsPause() const
+{
+    return mPlayingManager.IsPause();
+}
