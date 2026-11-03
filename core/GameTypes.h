@@ -34,7 +34,7 @@ enum class GameResult
     GameClear,
 };
 
-enum class BlockColor
+enum class  BlockColor : std::uint8_t
 {
     Empty, // 無し
     Red,

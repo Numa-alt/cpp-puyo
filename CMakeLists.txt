@@ -69,11 +69,11 @@ add_test(
 
 add_executable(test_board
     tests/test_board.cpp
-    )
+)
 
-    target_link_libraries(test_board PRIVATE
-        puyo_core
-    )
+target_link_libraries(test_board PRIVATE
+    puyo_core
+)
 
 target_compile_options(test_board PRIVATE ${PUYO_WARN_FLAGS})
 
@@ -85,11 +85,11 @@ add_test(
 
 add_executable(test_input
     tests/test_input.cpp
-    )
+)
 
-    target_link_libraries(test_input PRIVATE
-        puyo_core
-    )
+target_link_libraries(test_input PRIVATE
+    puyo_core
+)
 
 target_compile_options(test_input PRIVATE ${PUYO_WARN_FLAGS})
 
@@ -99,3 +99,17 @@ add_test(
 )
 
 
+add_executable(test_playing_manager
+    tests/test_playing_manager.cpp
+)
+
+target_link_libraries(test_playing_manager PRIVATE
+    puyo_core
+)
+
+target_compile_options(test_playing_manager PRIVATE ${PUYO_WARN_FLAGS})
+
+add_test(
+    NAME PlayingManagerTest
+    COMMAND test_playing_manager
+)

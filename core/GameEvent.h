@@ -117,7 +117,7 @@ struct GameEvent {
 class GameEventManager {
 private:
     static constexpr std::size_t MaxEvents = WIDTH * HEIGHT + 2;
-    std::array<GameEvent, MaxEvents> mGameEvents;
+    std::array<GameEvent, MaxEvents> mGameEvents{};
     std::size_t mTop = 0;
     std::size_t mEnd = 0;
 public:

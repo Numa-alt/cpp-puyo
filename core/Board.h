@@ -2,6 +2,7 @@
 
 #include "GameTypes.h"
 #include "FallingPair.h"
+#include <iostream>
 
 struct EraseFlags
 {
@@ -42,6 +43,7 @@ private:
 public:
     Board()
     {
+        std::cout << "sizeof(Board) " << sizeof(Board) << "\n";
         Reset();
     }
 
