@@ -2,7 +2,6 @@
 
 #include "GameTypes.h"
 #include "FallingPair.h"
-#include <iostream>
 
 struct EraseFlags
 {
@@ -43,7 +42,6 @@ private:
 public:
     Board()
     {
-        std::cout << "sizeof(Board) " << sizeof(Board) << "\n";
         Reset();
     }
 
@@ -93,3 +91,5 @@ public:
     void Fill(BlockColor color);
 
 };
+
+static_assert(sizeof(Board) == 96, "Board size changed");
