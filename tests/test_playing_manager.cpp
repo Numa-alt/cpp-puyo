@@ -61,7 +61,7 @@ void TestPauseDoesNotAdvanceAutoFall()
 
     StartAndAdvanceToControl(pm, input, gem, systemTimeMs);
 
-    int beforeY = pm.GetFallingPair().GetY();
+    const int beforeY = pm.GetFallingPair().GetY();
     input.Execute(systemTimeMs, ButtonBit(Button::Up));
     pm.Execute(input, systemTimeMs, gem);
     ++systemTimeMs;
@@ -72,16 +72,15 @@ void TestPauseDoesNotAdvanceAutoFall()
     ++systemTimeMs;
     input.Execute(systemTimeMs, 0);
 
-    int afterY = pm.GetFallingPair().GetY();
+    const int afterY = pm.GetFallingPair().GetY();
     assert(beforeY == afterY);
 
     systemTimeMs += InitialAutoFallIntervalMs;
     pm.Execute(input, systemTimeMs, gem);
-    int movedY = pm.GetFallingPair().GetY();
+    const int movedY = pm.GetFallingPair().GetY();
     assert(movedY == beforeY - 1);
 }
-
-// Pause前の残り時間が保持されるテスト
+// Pause前の自動落下までの残り時間が、Resume後にも保持されることを確認する
 void TestPausePreservesAutoFallRemainingTime()
 {
     PlayingManager pm{};
@@ -93,7 +92,7 @@ void TestPausePreservesAutoFallRemainingTime()
 
     systemTimeMs += ElapsedBeforePauseMs;
 
-    int beforeY = pm.GetFallingPair().GetY();
+    const int beforeY = pm.GetFallingPair().GetY();
 
     // Pause
     input.Execute(systemTimeMs, ButtonBit(Button::Up));
@@ -115,7 +114,7 @@ void TestPausePreservesAutoFallRemainingTime()
     assert(pm.GetFallingPair().GetY() == beforeY);
 
     // 残り1ms経過すると落下する
-    systemTimeMs++;
+    ++systemTimeMs;
     pm.Execute(input, systemTimeMs, gem);
     assert(pm.GetFallingPair().GetY() == (beforeY - 1));
 }
@@ -203,7 +202,7 @@ void TestControlToDropBlocks()
     // 横向きにする
     input.Execute(systemTimeMs, ButtonBit(Button::Rotate));
     pm.Execute(input, systemTimeMs, gem);
-    FallingPair fp = pm.GetFallingPair();
+    const FallingPair fp = pm.GetFallingPair();
     assert(fp.GetDirection() == Direction::Right);
 
     input.Execute(systemTimeMs, 0);
