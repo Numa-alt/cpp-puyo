@@ -1,9 +1,10 @@
 #include <cassert>
-#include <iostream>
 #include "GameEvent.h"
 
 int main()
 {
+    // GameEventに設定したtype / x / y / valueが
+    // 16bitパック後も正しく復元できることを確認する
     GameEvent event(
         GameEventType::Chain,
         5,
@@ -18,7 +19,8 @@ int main()
 
     GameEventManager manager{};
 
-    //73件いれる
+    // イベントキューの実効容量73件までPushでき、
+    // FIFO順で正しくPopできることを確認する
     for (int i = 0; i < 73; ++i)
     {
         int v = i & 0x3F;
@@ -32,25 +34,26 @@ int main()
         assert(ge.GetValue() == v);
     }
 
-    //74件目を入れる
+    // キューが満杯のとき、74件目のPushを拒否することを確認する
     for (int i = 0; i < 73; ++i)
     {
         int v = i & 0x3F;
         bool success = manager.Push(GameEventType::Chain, 0, 0, static_cast<std::uint16_t>(v));
         assert(success);
     }
-
-    //満杯、何もせず捨てる
     bool push74 = manager.Push(GameEventType::Chain, 0, 0, static_cast<std::uint16_t>(0));
     assert(push74 == false);
-    //一旦空にする
+
+
+    // 次のテストのため、キューを空にする
     while (!manager.IsEmpty())
     {
         GameEvent ge = manager.Pop();
         assert(ge.GetX() == 0);
     }
 
-    //wrap-around
+    // 読み書き位置が配列末尾をまたいでも、
+    // FIFO順が維持されることを確認する
     for (int i = 0; i < 60; ++i)
     {
         int v = i & 0x3F;
@@ -58,6 +61,7 @@ int main()
         assert(success);
     }
 
+    // 先頭50件を取り出す
     for (int i = 0; i < 50; ++i)
     {
         GameEvent ge = manager.Pop();
@@ -65,6 +69,7 @@ int main()
         assert(ge.GetValue() == v);
     }
 
+    // 空いた領域へさらに60件追加し、wrap-aroundを発生させる
     for (int i = 0; i < 60; ++i)
     {
         int v = i & 0x3F;
@@ -72,19 +77,20 @@ int main()
         assert(success);
     }
 
-    //50 から 59を確認
+    // 最初に残っていた50〜59が先に取り出されることを確認する
     for (int i = 0; i < 10; ++i)
     {
         GameEvent ge = manager.Pop();
         assert(ge.GetValue() == (50 + i));
     }
-    //0から59を確認
+    // その後に追加した0〜59が順番どおり取り出されることを確認する
     for (int i = 0; i < 60; ++i)
     {
         GameEvent ge = manager.Pop();
         assert(ge.GetValue() == i);
     }
 
+    // 全件取り出した後は空になっていることを確認する
     assert(manager.IsEmpty());
 
     return 0;
