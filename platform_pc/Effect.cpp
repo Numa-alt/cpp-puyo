@@ -1,12 +1,13 @@
+#include "Effect.h"
+
 #include <cassert>
 #include <algorithm>
 #include <array>
 #include <string>
-#include <iostream>
+
 
 #include "GameConfig.h"
 #include "Renderer.h"
-#include "Effect.h"
 
 #include "PcConfig.h"
 
@@ -89,25 +90,12 @@ void EffectManager::Execute(std::uint32_t systemTimeMs, bool isPause)
                 e->SetPauseTimeMs(systemTimeMs);
                 float rate = e->CalcRate(systemTimeMs);
                 e->SetRate(rate);
-                // std::cout << "Pause! rate " << rate << "\n";
             }
         }
         else {
             if (e->GetPause())
             {
                 e->SetPause(false);
-                // float rate = e->GetRate();
-                // std::uint32_t newStartTimeMs = static_cast<std::uint32_t>((float)systemTimeMs - (float)e->GetLifeTimeMs() * (1.0f - rate));
-                // int tt = (int)((float)(e->GetLifeTimeMs()) * (1.0f - rate));
-                // std::uint32_t oldStartTimeMs = e->GetStartTimeMs();
-                // //      e->SetStartTimeMs(newStartTimeMs);
-                // float newRate = e->CalcRate(systemTimeMs);
-                // std::cout << "Resume! rate " << rate << " new r ate " << rate << " tt " << tt << "\n";
-                // std::cout << "startTime " << oldStartTimeMs << " -> " << newStartTimeMs << "\n";
-            }
-            else
-            {
-
             }
         }
 
@@ -127,7 +115,6 @@ void EffectManager::Execute(std::uint32_t systemTimeMs, bool isPause)
 
 void EffectManager::Draw(SDL_Renderer* renderer)const
 {
-
     for (const auto& e : mEffects)
     {
         e->Draw(renderer);
@@ -189,8 +176,6 @@ void EffectChain::Execute(std::uint32_t systemTimeMs)
 {
     float rate = CalcRate(systemTimeMs);
 
-    // std::cout << "RATE " << rate << " ST " << GetStartTimeMs() << "\n";
-
     mAlpha = static_cast<std::uint32_t>(255 - 255 * rate) & 0xFF;
     mOffsetY = static_cast<int>(32 - 32 * rate);
     static const std::array<std::uint32_t, 5> colorTbl = {
@@ -220,7 +205,6 @@ void EffectChain::Execute(std::uint32_t systemTimeMs)
     mColor = colorTbl[index];
 
 }
-
 void EffectChain::Draw(SDL_Renderer* renderer)
 {
     std::string str = std::to_string(mChainNum) + " CHAIN";

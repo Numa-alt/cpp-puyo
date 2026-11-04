@@ -306,20 +306,101 @@ classDiagram
 
 `*--` はメンバとして保持する所有関係、`..>` は引数などを通して利用する依存関係を表しています。
 
-`PlayingManager` では主に以下の状態を管理しています。新しいブロックを配置できない場合は、`Spawn` から `Result` へ遷移します。
+### クラス図
+
+主要クラス間の所有関係と依存関係を簡略化して示します。  
+すべてのメンバや関数を列挙するのではなく、設計上の責務と関係が分かる範囲に絞っています。
+
+```mermaid
+classDiagram
+    class GameManager {
+        -GameState mGameState
+        -InputManager mInputManager
+        -PlayingManager mPlayingManager
+        -GameEventManager mGameEventManager
+        +Execute(systemTimeMs, held)
+        +GetState()
+        +GetBoard()
+        +GetFallingPair()
+        +GetNextPair()
+        +GetPlayState()
+        +GetScore()
+        +PopGameEvent()
+    }
+
+    class PlayingManager {
+        -FallingPair mFallingPair
+        -FallingPair mNextPair
+        -Board mBoard
+        -PlayState mState
+        -GameResult mGameResult
+        +Start(systemTimeMs, gameEventManager)
+        +Execute(input, systemTimeMs, gameEventManager)
+        +Spawn(gameEventManager)
+        +Control(input, gameEventManager)
+        +DropBlocks(gameEventManager)
+        +EraseCheck(gameEventManager)
+        +Erase(gameEventManager)
+        +Land(gameEventManager)
+    }
+
+    class Board {
+        +PutOne(x, y, color)
+        +GetColor(x, y)
+        +Reset()
+        +FindEraseBlocks()
+        +EraseBlocks()
+        +HasFloatingBlocks()
+        +DropFloatingBlocks()
+    }
+
+    class FallingPair
+
+    class InputManager {
+        +Execute(systemTimeMs, held)
+        +IsHeld(button)
+        +IsPressed(button)
+        +IsReleased(button)
+        +IsRepeat(button)
+    }
+
+    class GameEventManager {
+        +Push(...)
+        +Pop()
+        +IsEmpty()
+    }
+
+    GameManager *-- InputManager : 所有
+    GameManager *-- PlayingManager : 所有
+    GameManager *-- GameEventManager : 所有
+    PlayingManager *-- Board : 所有
+    PlayingManager *-- FallingPair : 操作中・次ブロック
+    PlayingManager ..> InputManager : 入力を参照
+    PlayingManager ..> GameEventManager : イベント通知
+```
+
+`*--` はメンバとして保持する所有関係、`..>` は引数などを通して利用する依存関係を表しています。
+
+`PlayingManager` の `PlayState` の遷移を示します。Pauseは独立したフラグで管理し、現在の `PlayState` を維持したままゲーム進行を停止するため、この図には状態として含めていません。
 
 ```mermaid
 stateDiagram-v2
     [*] --> Spawn
+
     Spawn --> Control: 出現待ち完了
-    Spawn --> Result: 置けない（ゲームオーバー）
-    Control --> EraseCheck: 着地（浮きなし）
-    Control --> DropBlocks: 着地（浮きあり）
-    DropBlocks --> EraseCheck: 浮きがなくなった
-    EraseCheck --> Erase: 消去あり
-    EraseCheck --> Spawn: 消去なし
-    Erase --> Spawn: 消去後に浮きなし
+    Spawn --> Result: 新しいブロックを配置できない
+
+    Control --> EraseCheck: 着地・浮きなし
+    Control --> DropBlocks: 着地・浮きあり
+
+    DropBlocks --> DropBlocks: まだ浮きあり
+    DropBlocks --> EraseCheck: 浮きなし
+
+    EraseCheck --> Erase: 消去対象あり
+    EraseCheck --> Spawn: 消去対象なし
+
     Erase --> DropBlocks: 消去後に浮きあり
+    Erase --> Spawn: 消去後に浮きなし
 ```
 
 ---
@@ -353,7 +434,7 @@ ArduinoのRAM使用量を抑えるため、ゲーム中に発生するイベン�
 
 ```text
 bit:  FEDCBA9876543210
-      EEExxxyyyyvvvvvv
+      EEEXXXYYYYVVVVVV
 
 E : GameEventType  3bit
 X : X座標          3bit
@@ -795,11 +876,6 @@ COM自動プレイでは、対戦機能ではなく、現在の盤面から置�
 
 ### 設計資料
 
-以下を追加予定です。
-
-- クラス図
-- ゲーム状態遷移図
-- PC / Arduino共通化構成図
 - Arduino配線図
 
 ### ポートフォリオ資料

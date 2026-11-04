@@ -13,6 +13,8 @@ enum class GameEventType {
     GameOver,
 };
 
+static_assert(WIDTH <= 8 && HEIGHT <= 16, "x/y must fit in 3/4 bits");
+static_assert((WIDTH* HEIGHT) / 4 <= 63, "max chain count must fit in 6 bits");
 
 struct GameEvent {
 
@@ -37,15 +39,15 @@ struct GameEvent {
     //   y     : 0 - 15  (実際には 0 - HEIGHT-1)
     //   value : 0 - 63
 
-    static const std::uint16_t ShiftType = 13;
-    static const std::uint16_t ShiftX = 10;
-    static const std::uint16_t ShiftY = 6;
-    static const std::uint16_t ShiftValue = 0;
+    static constexpr std::uint16_t ShiftType = 13;
+    static constexpr std::uint16_t ShiftX = 10;
+    static constexpr std::uint16_t ShiftY = 6;
+    static constexpr std::uint16_t ShiftValue = 0;
 
-    static const std::uint16_t MaskType = 0x7 << ShiftType;
-    static const std::uint16_t MaskX = 0x7 << ShiftX;
-    static const std::uint16_t MaskY = 0xF << ShiftY;
-    static const std::uint16_t MaskValue = 0x3F << ShiftValue;
+    static constexpr std::uint16_t MaskType = 0x7 << ShiftType;
+    static constexpr std::uint16_t MaskX = 0x7 << ShiftX;
+    static constexpr std::uint16_t MaskY = 0xF << ShiftY;
+    static constexpr std::uint16_t MaskValue = 0x3F << ShiftValue;
 
     std::uint16_t mData{};
 

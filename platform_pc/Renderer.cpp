@@ -1,6 +1,5 @@
 #include <sstream>
 
-
 #include "Renderer.h"
 
 #include "GameConfig.h"

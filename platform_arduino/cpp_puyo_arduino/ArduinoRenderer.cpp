@@ -2,9 +2,9 @@
 
 extern Adafruit_ST7789 tft;
 
-static const int gBoardOffsetX = 8;
-static const int gBoardOffsetY = 48;
-static const int gBlockSize = 16;
+static constexpr int gBoardOffsetX = 8;
+static constexpr int gBoardOffsetY = 48;
+static constexpr int gBlockSize = 16;
 
 int CalcBoardX(int ix)
 {
