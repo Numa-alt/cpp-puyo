@@ -9,7 +9,7 @@ void TestReset();
 void TestFindEraseThreeDoesNotErase();
 // 同色4個が横につながった場合、4個すべてが消去対象になることを確認する
 void TestFindEraseHorizontal4();
-// 同色が4個つながっている状態で消えるか？
+// 消去対象になった同色4個が EraseBlocks() で消えることを確認する
 void TestEraseBlocks();
 // 同色4個が縦につながった場合、4個すべてが消去対象になることを確認する
 void TestFindEraseVertical4();
@@ -19,7 +19,7 @@ void TestFindEraseLShape4();
 void TestFindEraseTShape4();
 // 同色5個がつながった場合、5個すべてが消去対象になることを確認する
 void TestFindEraseFiveBlocks();
-// ４個つながっているが１個だけ別色の場合は消えないか？
+// 4マス並んでいても1個が別色なら消去対象にならないことを確認する
 void TestFindEraseDifferentColorDoesNotErase();
 // 離れた同色ブロックを1つの連結グループとして数えないことを確認する
 void TestFindEraseDisconnectedPairsDoNotErase();
@@ -53,7 +53,7 @@ int main()
     return 0;
 }
 
-//置いたブロックが正しく反映されるか
+// 置いたブロックが正しく反映されるか
 void TestPutAndGetColor()
 {
     Board board;
@@ -102,7 +102,7 @@ void TestFindEraseHorizontal4()
     assert(board.CountEraseBlocks() == 4);
 }
 
-// 同色が4個つながっている状態で消えるか？
+// 消去対象になった同色4個が EraseBlocks() で消えることを確認する
 void TestEraseBlocks()
 {
     Board board;
@@ -167,7 +167,7 @@ void TestFindEraseTShape4()
     assert(board.CountEraseBlocks() == 4);
 }
 
-// ４個つながっているが１個だけ別色の場合は消えないか？
+// 4マス並んでいても1個が別色なら消去対象にならないことを確認する
 void TestFindEraseDifferentColorDoesNotErase()
 {
     Board board;
