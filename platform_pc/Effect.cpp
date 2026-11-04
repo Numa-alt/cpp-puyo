@@ -80,7 +80,7 @@ void EffectManager::Execute(std::uint32_t systemTimeMs, bool isPause)
             if (e->GetPause())
             {
                 float rate = e->GetRate();
-                std::uint32_t newStartTimeMs = systemTimeMs - e->GetLifeTimeMs() * (rate);
+                std::uint32_t newStartTimeMs = static_cast<std::uint32_t>(systemTimeMs - e->GetLifeTimeMs() * rate);
                 e->SetStartTimeMs(newStartTimeMs);
             }
             else

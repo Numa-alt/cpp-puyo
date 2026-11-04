@@ -193,6 +193,10 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
       <Project>{3DEA83A0-4242-313E-8914-3E2694315ABC}</Project>
       <Name>test_input</Name>
     </ProjectReference>
+    <ProjectReference Include="C:\Users\Numashita\cpp-study\cpp-puyo\build-win\test_playing_manager.vcxproj">
+      <Project>{7A3CA20A-9F65-361D-A1E3-48DECFA668A4}</Project>
+      <Name>test_playing_manager</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

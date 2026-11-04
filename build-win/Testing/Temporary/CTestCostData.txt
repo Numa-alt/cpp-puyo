@@ -1,4 +1,5 @@
-GameEventTest 39 0.000377749
-BoardTest 34 0.00035455
-InputTest 12 0.0138603
+GameEventTest 62 0.000283084
+BoardTest 57 0.000251314
+InputTest 35 0.000351991
+PlayingManagerTest 14 0.0202954
 ---

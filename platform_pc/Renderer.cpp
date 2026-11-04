@@ -65,13 +65,13 @@ void DrawString(SDL_Renderer* renderer, int x, int y, const std::string& str, in
     std::uint32_t alpha = (color & 0xFF000000);
 
     if (shadow) {
-        for (std::size_t i = 0; i < strUpper.size(); i++) {
+        for (std::size_t i = 0; i < strUpper.size(); ++i) {
             char c = strUpper[i];
             DrawChar(renderer, x + scale * 8 * static_cast<int>(i) + scale, y + scale, c, scale, alpha | 0x00000000);
         }
     }
 
-    for (std::size_t i = 0; i < strUpper.size(); i++) {
+    for (std::size_t i = 0; i < strUpper.size(); ++i) {
         char c = strUpper[i];
         DrawChar(renderer, x + scale * 8 * static_cast<int>(i), y, c, scale, color);
     }

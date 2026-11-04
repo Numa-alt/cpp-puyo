@@ -1,48 +1,63 @@
-Start testing: Nov 02 16:30 東京 (標準時)
+Start testing: Nov 04 14:00 東京 (標準時)
 ----------------------------------------------------------
-1/3 Testing: GameEventTest
-1/3 Test: GameEventTest
+1/4 Testing: GameEventTest
+1/4 Test: GameEventTest
 Command: "C:/Users/Numashita/cpp-study/cpp-puyo/build-win/Debug/test_game_event.exe"
 Directory: C:/Users/Numashita/cpp-study/cpp-puyo/build-win
-"GameEventTest" start time: Nov 02 16:30 東京 (標準時)
+"GameEventTest" start time: Nov 04 14:00 東京 (標準時)
 Output:
 ----------------------------------------------------------
 <end of output>
-Test time =   0.01 sec
+Test time =   0.02 sec
 ----------------------------------------------------------
 Test Passed.
-"GameEventTest" end time: Nov 02 16:30 東京 (標準時)
+"GameEventTest" end time: Nov 04 14:00 東京 (標準時)
 "GameEventTest" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-2/3 Testing: BoardTest
-2/3 Test: BoardTest
+2/4 Testing: BoardTest
+2/4 Test: BoardTest
 Command: "C:/Users/Numashita/cpp-study/cpp-puyo/build-win/Debug/test_board.exe"
 Directory: C:/Users/Numashita/cpp-study/cpp-puyo/build-win
-"BoardTest" start time: Nov 02 16:30 東京 (標準時)
+"BoardTest" start time: Nov 04 14:00 東京 (標準時)
 Output:
 ----------------------------------------------------------
 <end of output>
 Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"BoardTest" end time: Nov 02 16:30 東京 (標準時)
+"BoardTest" end time: Nov 04 14:00 東京 (標準時)
 "BoardTest" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-3/3 Testing: InputTest
-3/3 Test: InputTest
+3/4 Testing: InputTest
+3/4 Test: InputTest
 Command: "C:/Users/Numashita/cpp-study/cpp-puyo/build-win/Debug/test_input.exe"
 Directory: C:/Users/Numashita/cpp-study/cpp-puyo/build-win
-"InputTest" start time: Nov 02 16:30 東京 (標準時)
+"InputTest" start time: Nov 04 14:00 東京 (標準時)
 Output:
 ----------------------------------------------------------
 <end of output>
-Test time =   0.17 sec
+Test time =   0.01 sec
 ----------------------------------------------------------
 Test Passed.
-"InputTest" end time: Nov 02 16:30 東京 (標準時)
+"InputTest" end time: Nov 04 14:00 東京 (標準時)
 "InputTest" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Nov 02 16:30 東京 (標準時)
+4/4 Testing: PlayingManagerTest
+4/4 Test: PlayingManagerTest
+Command: "C:/Users/Numashita/cpp-study/cpp-puyo/build-win/Debug/test_playing_manager.exe"
+Directory: C:/Users/Numashita/cpp-study/cpp-puyo/build-win
+"PlayingManagerTest" start time: Nov 04 14:00 東京 (標準時)
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.28 sec
+----------------------------------------------------------
+Test Passed.
+"PlayingManagerTest" end time: Nov 04 14:00 東京 (標準時)
+"PlayingManagerTest" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 04 14:00 東京 (標準時)

@@ -6,7 +6,7 @@ void InputManager::Execute(std::uint32_t systemTimeMs, std::uint32_t held)
     mRepeat = 0;
     mReleased = 0;
 
-    for (std::size_t i = 0; i < static_cast<std::size_t>(Button::Max); i++)
+    for (std::size_t i = 0; i < static_cast<std::size_t>(Button::Max); ++i)
     {
         Button b = static_cast<Button>(i);
         std::uint32_t f = ButtonBit(b);
