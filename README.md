@@ -37,13 +37,13 @@ CMake / CTestによるPC上の自動テストも用意し、移植性・保守�
 
 ## メモリ使用量（Arduino UNO R4 Minima）
 
-Arduino IDEの最新のVerify結果と、固定長イベントキューの設計値は以下のとおりです。
+Arduino IDEの最新のVerify結果と、固定長イベントキューの設計値は以下のとおりです。現在の最終構成ではFlash 73,876 bytes（28%）、グローバルRAM 6,360 bytes（19%）です。
 
 | 項目 | 値 | 備考 |
 |---|---:|---|
-| Flash使用量 | 215,540 bytes（82%） | 最大262,144 bytes |
-| グローバル変数（RAM） | 12,332 bytes（37%） | 最大32,768 bytes |
-| 利用可能RAM | 20,436 bytes | ローカル変数などに利用可能 |
+| Flash使用量 | 73,876 bytes（28%） | 最大262,144 bytes |
+| グローバル変数（RAM） | 6,360 bytes（19%） | 最大32,768 bytes |
+| 利用可能RAM | 26,408 bytes | ローカル変数などに利用可能 |
 | `sizeof(Board)` | 96 bytes | 型サイズ最適化後の実測値 |
 | `GameEvent` | 2 bytes / event | 16bitにパック |
 | イベントキュー | 148 bytes | 2 bytes × 74 slots |
@@ -58,11 +58,11 @@ Arduino IDEの最新のVerify結果と、固定長イベントキューの設計
 | 項目 | 変更前 | 変更後 | 差分 |
 |---|---:|---:|---:|
 | `sizeof(Board)` | 312 bytes | 96 bytes | **216 bytes削減（約69%）** |
-| Flash使用量 | 215,492 bytes（82%） | 215,540 bytes（82%） | 48 bytes増加 |
-| グローバル変数（RAM） | 12,772 bytes（38%） | 12,332 bytes（37%） | **440 bytes削減** |
-| 利用可能RAM | 19,996 bytes | 20,436 bytes | **440 bytes増加** |
+| Flash使用量 | 73,828 bytes（28%） | 73,876 bytes（28%） | 48 bytes増加 |
+| グローバル変数（RAM） | 6,800 bytes（20%） | 6,360 bytes（19%） | **440 bytes削減** |
+| 利用可能RAM | 25,968 bytes | 26,408 bytes | **440 bytes増加** |
 
-`Board` 単体では216 bytes、ビルド全体のグローバルRAMでは440 bytes削減できました。グローバルRAM差分の内訳は断定せず、Verifyで確認できた合計値を記録しています。一方、Flash使用量は48 bytes増えているため、RAM削減とFlash増加の両方を実測値として示しています。
+`Board` 単体では216 bytes、ビルド全体のグローバルRAMでは440 bytes削減できました。変更前後は同じArduino UNO R4 Minima向けビルドでVerifyし、差分を実測しています。Flash使用量は48 bytes増えていますが、RAMは440 bytes削減できました。
 
 ---
 
@@ -208,7 +208,8 @@ cpp-puyo/
 ├─ tests/
 │  ├─ test_board.cpp
 │  ├─ test_game_event.cpp
-│  └─ test_input.cpp
+│  ├─ test_input.cpp
+│  └─ test_playing_manager.cpp
 │
 └─ CMakeLists.txt
 ```
@@ -273,7 +274,7 @@ ArduinoのRAM使用量を抑えるため、ゲーム中に発生するイベン�
 
 ```text
 bit:  FEDCBA9876543210
-      EEExxxyyyyvvvvvv
+      EEEXXXYYYYVVVVVV
 
 E : GameEventType  3bit
 X : X座標          3bit
@@ -419,7 +420,7 @@ CMake / CTestを利用し、現在は主に以下を確認しています。
 - 2回目以降のRepeat間隔
 - ボタンを離して再度入力した場合の状態
 
-### `GameEvent`
+### `GameEvent` / `GameEventManager`
 
 - イベント種別
 - X座標
@@ -427,6 +428,18 @@ CMake / CTestを利用し、現在は主に以下を確認しています。
 - value
 - 16bitパック後の値の復元
 - イベントキューへのPush / Pop
+- 実効容量73件までPushできること
+- 満杯時に74件目のPushを拒否すること
+- リングバッファのwrap-around後もFIFO順を維持すること
+
+### `PlayingManager`
+
+- Pause中の経過時間が自動落下に加算されないこと
+- Resume後に通常の自動落下が再開すること
+- Pause前の自動落下までの残り時間がResume後にも保持されること
+- `Spawn -> Control`
+- `Control -> EraseCheck`
+- `Control -> DropBlocks`
 
 ### テスト実行
 
@@ -442,7 +455,7 @@ Windowsの例：
 
 ```powershell
 cmake --build build-win
-ctest --test-dir build-win -C Debug
+ctest --test-dir build-win -C Debug --output-on-failure
 ```
 
 成功時：
@@ -691,14 +704,11 @@ COM自動プレイでは、対戦機能ではなく、現在の盤面から置�
 
 ### 自動テスト
 
-- `GameEventManager` のリングバッファ境界テスト
-- Pause時間管理のテスト
-- 状態遷移のテスト
-- 必要に応じた `PlayingManager` のテスト
+主要な `Board`、`InputManager`、`GameEventManager`、`PlayingManager` のテストは実装済みです。今後は、仕様変更や不具合修正に応じて必要な回帰テストを追加します。
 
 ### メモリ最適化
 
-`enum class BlockColor` などの基底型を `std::uint8_t` に指定し、`sizeof(Board)` を312 bytesから96 bytesへ、グローバルRAMを12,772 bytesから12,332 bytesへ削減しました。
+`enum class BlockColor` などの基底型を `std::uint8_t` に指定し、`sizeof(Board)` を312 bytesから96 bytesへ、グローバルRAMを6,800 bytesから6,360 bytesへ削減しました。
 
 今後もArduino IDEのVerify結果を確認しながら、盤面の内部表現などに追加の改善余地があるか検討します。
 
