@@ -17,7 +17,7 @@ void DrawGameOver();
 void DrawGameClear();
 
 // ゲーム描画
-void DrawBoard(const Board& board, const Board& boardBefore);
+void DrawBoard(const Board& board, const Board& previousBoard);
 void DrawBoardFull(const Board& board);
 void DrawFallingPair(const FallingPair& pair);
 void DrawNextPair(const FallingPair& pair);
