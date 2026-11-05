@@ -2,24 +2,12 @@
 
 #include <GameManager.h>
 
-#include <SPI.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_ST7789.h>
-
-// 座標変換
-int CalcBoardX(int ix);
-int CalcBoardY(int iy);
-
 // 画面単位の描画
 void ClearScreen(std::uint16_t color);
-void DrawTitle();
-void DrawGameOver();
-void DrawGameClear();
 
 // ゲーム描画
 void DrawBoard(const Board& board, const Board& previousBoard);
 void DrawBoardFull(const Board& board);
-void DrawFallingPair(const FallingPair& pair);
 void DrawNextPair(const FallingPair& pair);
 void DrawBlock(int ix, int iy, BlockColor color);
 

@@ -160,7 +160,7 @@ int main(int, char* [])
             }
         }
 
-        effectManager.Execute(systemTimeMs, gameManager.IsPause());
+        effectManager.Execute(systemTimeMs, gameManager.IsPaused());
 
         DrawScreen(renderer, gameManager, effectManager);
     }

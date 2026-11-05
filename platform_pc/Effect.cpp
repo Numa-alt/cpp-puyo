@@ -40,11 +40,11 @@ float Effect::CalcRate(std::uint32_t systemTimeMs) const
 }
 bool Effect::GetPause()const
 {
-    return mPause;
+    return mIsPaused;
 }
 void Effect::SetPause(bool pause)
 {
-    mPause = pause;
+    mIsPaused = pause;
 }
 void Effect::SetPauseTimeMs(std::uint32_t pauseTimeMs)
 {

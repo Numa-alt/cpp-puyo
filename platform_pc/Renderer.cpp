@@ -204,7 +204,7 @@ void DrawPlaying(SDL_Renderer* renderer, const GameManager& gameManager)
     }
 
     //一時停止
-    if (gameManager.IsPause())
+    if (gameManager.IsPaused())
     {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0x80);
         SDL_Rect rect{

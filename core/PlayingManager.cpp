@@ -73,7 +73,7 @@ void PlayingManager::Start(std::uint32_t systemTimeMs, GameEventManager& gameEve
 
     mDropStartTimeMs = 0;
 
-    mEraseCheckTimeMs = 0;
+    mEraseCheckStartTimeMs = 0;
 
     mEraseStartTimeMs = 0;
 
@@ -87,7 +87,7 @@ void PlayingManager::Start(std::uint32_t systemTimeMs, GameEventManager& gameEve
 
     SetState(PlayState::Spawn, gameEventManager);
 
-    mPause = false;
+    mIsPaused = false;
 }
 
 //落下時間計測のタイマーをリセット
@@ -167,7 +167,7 @@ void PlayingManager::SetState(PlayState next, GameEventManager& gameEventManager
 
     case PlayState::EraseCheck:
         {
-            mEraseCheckTimeMs = mSystemTimeMs;
+            mEraseCheckStartTimeMs = mSystemTimeMs;
             break;
         }
 
@@ -212,20 +212,20 @@ void PlayingManager::PushEvent(GameEventManager& mgr, GameEventType type, int x,
     [[maybe_unused]] bool success = mgr.Push(type, x, y, value);
     assert(success);
 }
-bool PlayingManager::IsPause()const
+bool PlayingManager::IsPaused()const
 {
-    return mPause;
+    return mIsPaused;
 }
 void PlayingManager::Execute(const InputManager& input, std::uint32_t systemTimeMs, GameEventManager& gameEventManager)
 {
     if (input.IsPressed(Button::Up))
     {
-        if (mPause)
+        if (mIsPaused)
         {
             std::uint32_t addTimeMs = (systemTimeMs - mPauseStartTimeMs);
             mSpawnStartTimeMs += addTimeMs;
             mDropStartTimeMs += addTimeMs;
-            mEraseCheckTimeMs += addTimeMs;
+            mEraseCheckStartTimeMs += addTimeMs;
             mEraseStartTimeMs += addTimeMs;
             mLastAutoFallTimeMs += addTimeMs;
 
@@ -235,9 +235,9 @@ void PlayingManager::Execute(const InputManager& input, std::uint32_t systemTime
         {
             mPauseStartTimeMs = systemTimeMs;
         }
-        mPause = !mPause;
+        mIsPaused = !mIsPaused;
     }
-    if (mPause)
+    if (mIsPaused)
     {
         return;
     }
@@ -330,7 +330,7 @@ void PlayingManager::Control(const InputManager& input, GameEventManager& gameEv
         else
         {
             bool slide = false;
-            //相方が左にいる場合は右にずらしてみる
+            // 相方が左にいる場合は右にずらしてみる
             if (pair.GetDirection() == Direction::Left)
             {
                 FallingPair pairSlide = pair;
@@ -341,7 +341,7 @@ void PlayingManager::Control(const InputManager& input, GameEventManager& gameEv
                     slide = true;
                 }
             }
-            //相方が右にいる場合は左にずらしてみる
+            // 相方が右にいる場合は左にずらしてみる
             else if (pair.GetDirection() == Direction::Right)
             {
                 FallingPair pairSlide = pair;
@@ -355,7 +355,7 @@ void PlayingManager::Control(const InputManager& input, GameEventManager& gameEv
 
             if (!slide)
             {
-                //スライドできなかった場合は
+                // スライドできなかった場合は
                 // 180度
                 pair.Rotate();
                 if (mBoard.CanPlace(pair))
@@ -366,14 +366,13 @@ void PlayingManager::Control(const InputManager& input, GameEventManager& gameEv
         }
     }
 
-    //
     if (IsAutoFallDue()) { // 前回の落下から一定時間経過？
         // 1段落下
         FallingPair pair = mFallingPair;
         pair.Move(0, -1);
         if (mBoard.CanPlace(pair)) {
             mFallingPair = pair;
-            //落下タイマーをリセット
+            // 落下タイマーをリセット
             ResetAutoFallTimer();
         }
         else {
@@ -383,7 +382,7 @@ void PlayingManager::Control(const InputManager& input, GameEventManager& gameEv
         }
     }
 }
-//着地処理
+// 着地処理
 void PlayingManager::Land(GameEventManager& gameEventManager)
 {
     mBoard.PutPair(mFallingPair);
@@ -391,13 +390,13 @@ void PlayingManager::Land(GameEventManager& gameEventManager)
     mFallingPair.SetColor(0, BlockColor::Empty);
     mFallingPair.SetColor(1, BlockColor::Empty);
 
-    if (!mBoard.HasFloatingBlocks())//浮いているブロックがない？
+    if (!mBoard.HasFloatingBlocks())// 浮いているブロックがない？
     {
-        //浮いているブロックがないので消えるブロックがあるかチェック
+        // 浮いているブロックがないので消えるブロックがあるかチェック
         SetState(PlayState::EraseCheck, gameEventManager);
     }
     else {
-        //浮いているブロックがある場合
+        // 浮いているブロックがある場合
         SetState(PlayState::DropBlocks, gameEventManager);
     }
 
@@ -406,7 +405,7 @@ void PlayingManager::Land(GameEventManager& gameEventManager)
 // 消去チェック
 void PlayingManager::EraseCheck(GameEventManager& gameEventManager) {
 
-    if ((mSystemTimeMs - mEraseCheckTimeMs) >= EraseCheckDelayMs)
+    if ((mSystemTimeMs - mEraseCheckStartTimeMs) >= EraseCheckDelayMs)
     {
         if (mBoard.FindEraseBlocks()) // 消える？
         {
@@ -418,7 +417,7 @@ void PlayingManager::EraseCheck(GameEventManager& gameEventManager) {
         }
     }
 }
-//得点計算
+// 得点計算
 std::uint32_t PlayingManager::CalcScore(std::uint32_t eraseBlockCount, std::uint32_t chainCount) const
 {
     return eraseBlockCount * chainCount;
@@ -429,29 +428,29 @@ void PlayingManager::Erase(GameEventManager& gameEventManager)
     if ((mSystemTimeMs - mEraseStartTimeMs) >= EraseDurationMs) // 消去処理終了？
     {
         std::uint32_t eraseBlockCount = mBoard.CountEraseBlocks();
-        //スコア計算
+        // スコア計算
         mScore += CalcScore(eraseBlockCount, mChainCount);
 
-        mTotalEraseBlockCount += eraseBlockCount;//全部で何個消したか
+        mTotalEraseBlockCount += eraseBlockCount;// 全部で何個消したか
 
-        mEraseBlockCountForSpeedUp += eraseBlockCount;//落下速度を加速させるための消したブロックのカウンタ
+        mEraseBlockCountForSpeedUp += eraseBlockCount;// 落下速度を加速させるための消したブロックのカウンタ
 
-        //規定の個数を消したか？
+        // 規定の個数を消したか？
         while (mEraseBlockCountForSpeedUp >= EraseCountForSpeedUp) {
             mEraseBlockCountForSpeedUp -= EraseCountForSpeedUp;
 
             static_assert(MinAutoFallIntervalMs >= AutoFallDecreaseMs, "underflow guard");
 
-            //落下速度アップ
+            // 落下速度アップ
             mAutoFallIntervalMs = std::max(MinAutoFallIntervalMs, mAutoFallIntervalMs - AutoFallDecreaseMs);
         }
 
-        //ブロックを消す
+        // ブロックを消す
         mBoard.EraseBlocks();
 
         if (mBoard.HasFloatingBlocks()) // 浮いているブロックがある？
         {
-            SetState(PlayState::DropBlocks, gameEventManager); //
+            SetState(PlayState::DropBlocks, gameEventManager);
         }
         else
         {
@@ -467,13 +466,13 @@ void PlayingManager::DropBlocks(GameEventManager& gameEventManager)
     {
         mBoard.DropFloatingBlocks();
 
-        if (!mBoard.HasFloatingBlocks())//浮いているブロックがない？
+        if (!mBoard.HasFloatingBlocks())// 浮いているブロックがない？
         {
-            //浮いているブロックがないので消えるブロックがあるかチェック
+            // 浮いているブロックがないので消えるブロックがあるかチェック
             SetState(PlayState::EraseCheck, gameEventManager);
         }
         else {
-            //再度落下処理
+            // 再度落下処理
             SetState(PlayState::DropBlocks, gameEventManager);
         }
     }

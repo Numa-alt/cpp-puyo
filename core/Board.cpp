@@ -3,7 +3,7 @@
 #include <cassert>
 
 //1ブロック配置
-void Board::PutOne(int x, int y, BlockColor color)
+void Board::PlaceBlock(int x, int y, BlockColor color)
 {
     assert((x >= 0) && (x < WIDTH) && (y >= 0) && (y < HEIGHT));
     mCells[y][x] = color;
@@ -70,7 +70,7 @@ bool Board::CanPlace(const FallingPair& pair) const
         return false;
     }
 
-    // 相方のブロックの位置が空いない？
+    // 相方のブロックの位置が空いていない？
     if (mCells[y][x] != BlockColor::Empty)
     {
         return false;
@@ -251,7 +251,7 @@ bool Board::IsEraseBlock(int x, int y) const
 {
     return mEraseFlags.IsOn(x, y);
 }
-//真ん中あたりの消えるボロックの位置を取得する
+//真ん中あたりの消えるブロックの位置を取得する
 void Board::SearchCenterEraseBlock(int& x, int& y) const
 {
     int minX = WIDTH;

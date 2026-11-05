@@ -120,43 +120,39 @@ class GameEventManager {
 private:
     static constexpr std::size_t MaxEvents = WIDTH * HEIGHT + 2;
     std::array<GameEvent, MaxEvents> mGameEvents{};
-    std::size_t mTop = 0;
-    std::size_t mEnd = 0;
+    std::size_t mReadIndex = 0;
+    std::size_t mWriteIndex = 0;
 public:
     [[nodiscard]] bool Push(GameEventType type, int x, int y, std::uint16_t value)
     {
-        std::size_t next = (mEnd + 1) % MaxEvents;
+        std::size_t next = (mWriteIndex + 1) % MaxEvents;
         //次の書き込み先が先頭なら満杯
-        if (next == mTop)
+        if (next == mReadIndex)
         {
             //満杯：上書きせず捨てる
             return false;
         }
-        mGameEvents[mEnd].Set(type, x, y, value);
-        mEnd = next;
+        mGameEvents[mWriteIndex].Set(type, x, y, value);
+        mWriteIndex = next;
         return true;
     }
 
     bool IsEmpty() const
     {
-        return mTop == mEnd;
+        return mReadIndex == mWriteIndex;
     }
     GameEvent Pop()
     {
-        assert(mTop != mEnd);
+        assert(mReadIndex != mWriteIndex);
 
-        GameEvent gameEvent = mGameEvents[mTop];
-        mTop++;
-        if (mTop >= MaxEvents)
+        GameEvent gameEvent = mGameEvents[mReadIndex];
+        mReadIndex++;
+        if (mReadIndex >= MaxEvents)
         {
-            mTop = 0;
+            mReadIndex = 0;
         }
         return gameEvent;
     }
 
-    std::size_t GetEnd()const
-    {
-        return mEnd;
-    }
 };
 

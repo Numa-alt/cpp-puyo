@@ -1,4 +1,5 @@
 #include <GameManager.h>
+#include "InputState.h"
 
 #include <SPI.h>
 #include <Adafruit_GFX.h>
@@ -13,32 +14,25 @@ GameState gPreviousGameState = GameState::Title;
 PlayState gPreviousPlayState = PlayState::Result;
 Board gPreviousBoard{};
 
+bool gIsGameStateDisplayInitialized = false;
 int gDisplayedTotalEraseBlockCount = -1;
 int gDisplayedScore = -1;
 FallingPair gDisplayedNextPair{};
 bool gIsPauseDisplayed = false;
 
-Adafruit_seesaw ss;
+Adafruit_seesaw gSeesaw;
 
 constexpr int TFT_CS = 10;
 constexpr int TFT_DC = 7;
 constexpr int TFT_RST = 8;
 
-Adafruit_ST7789 tft(TFT_CS, TFT_DC, TFT_RST);
+Adafruit_ST7789 gTft(TFT_CS, TFT_DC, TFT_RST);
 
 // seesawゲームパッドで使用するボタンGPIOのビットマスク
-static constexpr std::uint8_t BUTTON_X = 6;
-static constexpr std::uint8_t BUTTON_Y = 2;
-static constexpr std::uint8_t BUTTON_A = 5;
-static constexpr std::uint8_t BUTTON_B = 1;
-static constexpr std::uint8_t BUTTON_SELECT = 0;
-static constexpr std::uint8_t BUTTON_START = 16;
-static constexpr std::uint32_t gButtonMask = (1UL << BUTTON_A);
+static constexpr std::uint8_t kButtonA = 5;
+static constexpr std::uint32_t gButtonMask = 1UL << kButtonA;
 
-#define BIT(_x) (1UL<<(_x))
-
-
-static constexpr std::uint16_t gGameBgColor = 8 | (8 << 5) | (8 << 10);
+static constexpr std::uint16_t gGameBgColor = 8 | (8 << 5) | (8 << 11);
 
 // TOTAL表示
 static constexpr int gMaxDisplayedTotalEraseBlockCount = 99999999;
@@ -46,108 +40,109 @@ static constexpr int gTotalTextX = 120;
 static constexpr int gTotalTextY = 24;
 static constexpr int gTotalNumX = 120;
 static constexpr int gTotalNumY = 36;
-static constexpr std::uint16_t gTotalTextColor = 0x7FFF;
+static constexpr std::uint16_t gTotalTextColor = ST77XX_WHITE;
 static constexpr std::uint16_t gTotalTextBackColor = gGameBgColor;
 
 // SCORE表示
 static constexpr int gMaxDisplayedScore = 99999999;
 static constexpr int gScoreTextX = 8;
 static constexpr int gScoreTextY = 24;
-static constexpr std::uint16_t gScoreTextColor = 0x7FFF;
+static constexpr int gScoreNumX = 8;
+static constexpr int gScoreNumY = 32;
+static constexpr std::uint16_t gScoreTextColor = ST77XX_WHITE;
 static constexpr std::uint16_t gScoreTextBackColor = gGameBgColor;
 
 // NEXT表示
 static constexpr int gNextPairTextX = 120;
 static constexpr int gNextPairTextY = 50;
-static constexpr std::uint16_t gNextPairTextColor = 0x7FFF;
+static constexpr std::uint16_t gNextPairTextColor = ST77XX_WHITE;
 static constexpr std::uint16_t gNextPairTextBackColor = gGameBgColor;
 
 // PAUSE表示
 static constexpr int gPauseTextX = 120;
-static constexpr int gPauseTextY = 100;
-static constexpr std::uint16_t gPauseTextColor = 0x7FFF;
+static constexpr int gPauseTextY = 108;
+static constexpr std::uint16_t gPauseTextColor = ST77XX_WHITE;
 static constexpr std::uint16_t gPauseTextBackColor = gGameBgColor;
+
+constexpr std::uint32_t kJoystickXPin = 14;
+constexpr std::uint32_t kJoystickYPin = 15;
+
 
 void setup()
 {
     Serial.begin(115200);
 
-    gameManager.SetRandomSeed(micros());
-    gameManager.SetState(GameState::Title);
-
     Serial.println("start");
 
     // seesawゲームパッドを初期化
     static constexpr std::uint16_t kGamepadI2cAddress = 0x50;
-    if (!ss.begin(kGamepadI2cAddress)) {
+    if (!gSeesaw.begin(kGamepadI2cAddress)) {
         Serial.println("ERROR! seesaw not found");
         while (1) delay(1);
     }
 
     Serial.println("seesaw started");
-    static constexpr std:uint16_t kExpectedProductId = 5743;
-    std::uint32_t version = ((ss.getVersion() >> 16) & 0xFFFF);
-    if (version != kExpectedProductId) {
+    static constexpr std::uint16_t kExpectedProductId = 5743;
+    std::uint32_t productId = ((gSeesaw.getVersion() >> 16) & 0xFFFF);
+    if (productId != kExpectedProductId) {
         Serial.print("Wrong firmware loaded? ");
-        Serial.println(version);
+        Serial.println(productId);
         while (1) delay(10);
     }
 
     Serial.println("Found Product 5743");
 
-    ss.pinModeBulk(gButtonMask, INPUT_PULLUP);
-    // ss.setGPIOInterrupts(gButtonMask, 1);
+    gSeesaw.pinModeBulk(gButtonMask, INPUT_PULLUP);
 
     // ST7789 LCDを初期化
-    tft.init(240, 320);
-    tft.setRotation(0);
+    gTft.init(240, 320);
+    gTft.setRotation(0);
 
-    tft.fillScreen(gGameBgColor);
+    gTft.fillScreen(gGameBgColor);
 
+
+    std::uint32_t seed =
+        micros()
+        ^ (static_cast<std::uint32_t>(gSeesaw.analogRead(kJoystickXPin)) << 10)
+        ^ gSeesaw.analogRead(kJoystickYPin);
+    gameManager.SetRandomSeed(seed);
+
+    gameManager.SetState(GameState::Title);
 }
-
-struct InputState
-{
-    bool left;
-    bool right;
-    bool down;
-    bool up;
-    bool rotate;
-};
-
 
 InputState ReadInput()
 {
-    constexpr std::uint32_t JoystickCenter = 512;
+    constexpr std::uint32_t kJoystickAdcMax = 1023;
+    constexpr std::uint32_t kJoystickCenter = 512;
     // 中央付近の入力を無視するデッドゾーンを設ける
-    constexpr std::uint32_t JoystickDeadZone = 120;
+    constexpr std::uint32_t kJoystickDeadZone = 120;
 
     // ジョイスティックのX軸は実際の操作方向と値の増減が逆なので反転する
-    std::uint32_t x = 1023 - ss.analogRead(14);
-    std::uint32_t y = ss.analogRead(15);
+    std::uint32_t x = kJoystickAdcMax - gSeesaw.analogRead(kJoystickXPin);
+    std::uint32_t y = gSeesaw.analogRead(kJoystickYPin);
     InputState inputState{};
 
-    if (x < JoystickCenter - JoystickDeadZone)
+    if (x < kJoystickCenter - kJoystickDeadZone)
     {
         inputState.left = true;
     }
-    else if (x > JoystickCenter + JoystickDeadZone)
+    else if (x > kJoystickCenter + kJoystickDeadZone)
     {
         inputState.right = true;
     }
-    if (y > JoystickCenter + JoystickDeadZone)
+    if (y > kJoystickCenter + kJoystickDeadZone)
     {
         inputState.down = true;
     }
-    if (y < JoystickCenter - JoystickDeadZone)
+    if (y < kJoystickCenter - kJoystickDeadZone)
     {
         inputState.up = true;
     }
 
-    std::uint32_t buttons = ss.digitalReadBulk(gButtonMask);
+    std::uint32_t buttons = gSeesaw.digitalReadBulk(gButtonMask);
 
     // INPUT_PULLUPのため、ボタン押下時は対応bitが0になる
-    inputState.rotate = !(buttons & BIT(BUTTON_A));
+    inputState.rotate = (buttons & gButtonMask) == 0;
 
     return inputState;
 }
@@ -191,15 +186,13 @@ void DrawPlaying()
     }
 
     // 固定済み盤面に操作中のぷよを重ね、今回表示する盤面を作る
-    Board target{};
-
-    target = gameManager.GetBoard();
+    Board target = gameManager.GetBoard();
 
     auto fallingPair = gameManager.GetFallingPair();
     if (fallingPair.GetColor(0) != BlockColor::Empty || fallingPair.GetColor(1) != BlockColor::Empty)
     {
-        target.PutOne(fallingPair.GetX(), fallingPair.GetY(), fallingPair.GetColor(0));
-        target.PutOne(fallingPair.GetPairX(), fallingPair.GetPairY(), fallingPair.GetColor(1));
+        target.PlaceBlock(fallingPair.GetX(), fallingPair.GetY(), fallingPair.GetColor(0));
+        target.PlaceBlock(fallingPair.GetPartnerX(), fallingPair.GetPartnerY(), fallingPair.GetColor(1));
     }
 
     // 前回表示との差分セルだけLCDへ描画する
@@ -207,48 +200,49 @@ void DrawPlaying()
     gPreviousBoard = target;
 
     // SPI描画負荷を減らすため、UIは値が変化した場合だけ更新する
-
-    if (IsDifferentPair(gameManager.GetNextPair(), gDisplayedNextPair))
+    const FallingPair nextPair = gameManager.GetNextPair();
+    if (IsDifferentPair(nextPair, gDisplayedNextPair))
     {
-        gDisplayedNextPair = gameManager.GetNextPair();
-        DrawNextPair(gameManager.GetNextPair());
+        gDisplayedNextPair = nextPair;
+        DrawNextPair(nextPair);
     }
 
-    if (gameManager.GetTotalEraseBlockCount() != gDisplayedTotalEraseBlockCount)
+    int displayedCount = gameManager.GetTotalEraseBlockCount();
+    // 表示桁数を超えないよう上限値でクランプする
+    if (displayedCount > gMaxDisplayedTotalEraseBlockCount)
     {
-        gDisplayedTotalEraseBlockCount = gameManager.GetTotalEraseBlockCount();
-        int displayCount = gDisplayedTotalEraseBlockCount;
-        // 表示桁数を超えないよう上限値でクランプする
-        if (displayCount > gMaxDisplayedTotalEraseBlockCount)
-        {
-            displayCount = gMaxDisplayedTotalEraseBlockCount;
-        }
+        displayedCount = gMaxDisplayedTotalEraseBlockCount;
+    }
+    if (displayedCount != gDisplayedTotalEraseBlockCount)
+    {
+        gDisplayedTotalEraseBlockCount = displayedCount;
+
         char totalText[9]{};
-        snprintf(totalText, sizeof(totalText), "%8d", displayCount);
+        snprintf(totalText, sizeof(totalText), "%8d", displayedCount);
         DrawText(totalText, gTotalNumX, gTotalNumY, gTotalTextColor, gTotalTextBackColor, 1);
     }
 
-    if (gameManager.GetScore() != gDisplayedScore)
+    int displayedScore = gameManager.GetScore();
+    // 表示桁数を超えないよう上限値でクランプする
+    if (displayedScore > gMaxDisplayedScore)
     {
-        gDisplayedScore = gameManager.GetScore();
-        int displayScore = gameManager.GetScore();
-        // 表示桁数を超えないよう上限値でクランプする
-        if (displayScore > gMaxDisplayedScore)
-        {
-            displayScore = gMaxDisplayedScore;
-        }
+        displayedScore = gMaxDisplayedScore;
+    }
+    if (displayedScore != gDisplayedScore)
+    {
+        gDisplayedScore = displayedScore;
         char scoreText[9]{};
         snprintf(scoreText, sizeof(scoreText), "%8d", displayedScore);
-        DrawText(scoreText, gScoreTextX, gScoreTextY + 8, gScoreTextColor, gScoreTextBackColor, 1);
+        DrawText(scoreText, gScoreNumX, gScoreNumY, gScoreTextColor, gScoreTextBackColor, 1);
     }
 
     // Pause状態が変化した時だけ表示を更新する
-    if (gameManager.IsPause())
+    if (gameManager.IsPaused())
     {
         if (!gIsPauseDisplayed)
         {
             gIsPauseDisplayed = true;
-            DrawText("PAUSE", gPauseTextX, gPauseTextY + 8, gPauseTextColor, gPauseTextBackColor, 1);
+            DrawText("PAUSE", gPauseTextX, gPauseTextY, gPauseTextColor, gPauseTextBackColor, 1);
         }
     }
     else
@@ -256,7 +250,7 @@ void DrawPlaying()
         if (gIsPauseDisplayed)
         {
             gIsPauseDisplayed = false;
-            DrawText("     ", gPauseTextX, gPauseTextY + 8, gPauseTextColor, gPauseTextBackColor, 1);
+            DrawText("     ", gPauseTextX, gPauseTextY, gPauseTextColor, gPauseTextBackColor, 1);
         }
     }
 
@@ -270,6 +264,7 @@ void DrawPlaying()
     // Arduino版では未使用のイベントも必ずPopし、固定長キューが詰まるのを防ぐ
     while (!gameManager.IsGameEventEmpty())
     {
+        gameManager.PopGameEvent();
     }
 }
 
@@ -289,6 +284,7 @@ bool IsDifferentPair(const FallingPair& a, const FallingPair& b)
 
 void InitializePlayingDisplay()
 {
+    gPreviousBoard = gameManager.GetBoard();
     DrawBoardFull(gPreviousBoard);
     gIsPauseDisplayed = false;
 
@@ -313,32 +309,39 @@ void loop()
 
     gameManager.Execute(now, held);
 
-    if (gameManager.GetState() != gPreviousGameState)
+    if ((gameManager.GetState() != gPreviousGameState) || !gIsGameStateDisplayInitialized)
     {
+        gIsGameStateDisplayInitialized = true;
         gPreviousGameState = gameManager.GetState();
 
         // GameStateが切り替わった時だけ画面全体を初期化する
         ClearScreen(gGameBgColor);
 
-        if (gameManager.GetState() == GameState::Playing)
+        switch (gameManager.GetState())
         {
+        case GameState::Title:
+            DrawText("TITLE", 50, 140, ST77XX_WHITE, gGameBgColor, 2);
+            DrawText("PUSH BUTTON", 50, 180, ST77XX_WHITE, gGameBgColor, 2);
+            break;
+
+        case GameState::Playing:
             InitializePlayingDisplay();
+            break;
+
+        case GameState::GameOver:
+            DrawText("GAME OVER", 50, 140, ST77XX_WHITE, gGameBgColor, 2);
+            DrawText("PUSH BUTTON", 50, 180, ST77XX_WHITE, gGameBgColor, 2);
+            break;
+
+        case GameState::GameClear:
+            DrawText("GAME CLEAR", 50, 140, ST77XX_WHITE, gGameBgColor, 2);
+            DrawText("PUSH BUTTON", 50, 180, ST77XX_WHITE, gGameBgColor, 2);
+            break;
         }
     }
 
-    switch (gameManager.GetState())
+    if (gameManager.GetState() == GameState::Playing)
     {
-    case GameState::Title:
-        DrawTitle();
-        break;
-    case GameState::Playing:
         DrawPlaying();
-        break;
-    case GameState::GameOver:
-        DrawGameOver();
-        break;
-    case GameState::GameClear:
-        DrawGameClear();
-        break;
     }
 }

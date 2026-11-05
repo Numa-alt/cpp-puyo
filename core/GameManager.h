@@ -28,7 +28,6 @@ private:
 public:
     void Execute(std::uint32_t systemTimeMs, std::uint32_t held);
 
-    //
     void SetState(GameState next);
 
     GameState GetState() const;
@@ -54,8 +53,6 @@ public:
     std::uint32_t GetAutoFallIntervalMs()const;
     std::uint32_t GetTotalEraseBlockCount()const;
 
-    std::size_t GetGameEventEnd()const;
-
-    bool IsPause() const;
+    bool IsPaused() const;
 
 };

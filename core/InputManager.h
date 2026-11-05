@@ -8,12 +8,12 @@
 class InputManager
 {
 private:
-    std::uint32_t mHeld = 0;//押されている間１
-    std::uint32_t mPressed = 0;//押された瞬間１
-    std::uint32_t mReleased = 0;//離した瞬間１
-    std::uint32_t mRepeat = 0;//リピート
+    std::uint32_t mHeld = 0;// 押されている間１
+    std::uint32_t mPressed = 0;// 押された瞬間１
+    std::uint32_t mReleased = 0;// 離した瞬間１
+    std::uint32_t mRepeat = 0;// リピート
 
-    std::array<std::uint32_t, static_cast<std::size_t>(Button::Max)> mSystemTimeMs{};
+    std::array<std::uint32_t, static_cast<std::size_t>(Button::Max)> mLastRepeatTimeMs{};
     std::array<std::uint32_t, static_cast<std::size_t>(Button::Max)> mRepeatCount{};
 
 public:
@@ -38,7 +38,7 @@ public:
         return (mReleased & ButtonBit(button)) != 0;
     }
 
-    // //リピート
+    // リピート
     bool IsRepeat(Button button) const
     {
         return (mRepeat & ButtonBit(button)) != 0;

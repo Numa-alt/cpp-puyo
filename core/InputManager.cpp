@@ -14,11 +14,11 @@ void InputManager::Execute(std::uint32_t systemTimeMs, std::uint32_t held)
         {
             if (!(mHeld & f))
             {
-                //前回おされてなくて、今回押されたとき
+                //前回押されておらず、今回押されたとき
                 mPressed |= f;
                 mRepeat |= f;
                 //押され続ける時間を計測開始
-                mSystemTimeMs[i] = systemTimeMs;
+                mLastRepeatTimeMs[i] = systemTimeMs;
                 mRepeatCount[i] = 0;
             }
             //リピート入力の初回だけ多めに待つ
@@ -27,10 +27,10 @@ void InputManager::Execute(std::uint32_t systemTimeMs, std::uint32_t held)
             {
                 intervalTimeMs = 100;
             }
-            if ((systemTimeMs - mSystemTimeMs[i]) >= intervalTimeMs)
+            if ((systemTimeMs - mLastRepeatTimeMs[i]) >= intervalTimeMs)
             {
                 mRepeat |= f;
-                mSystemTimeMs[i] = systemTimeMs;
+                mLastRepeatTimeMs[i] = systemTimeMs;
                 ++mRepeatCount[i];
             }
         }

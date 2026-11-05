@@ -58,7 +58,7 @@ void TestPutAndGetColor()
 {
     Board board;
 
-    board.PutOne(2, 3, BlockColor::Red);
+    board.PlaceBlock(2, 3, BlockColor::Red);
 
     assert(board.GetColor(2, 3) == BlockColor::Red);
     assert(board.GetColor(0, 0) == BlockColor::Empty);
@@ -69,7 +69,7 @@ void TestReset()
 {
     Board board;
 
-    board.PutOne(2, 3, BlockColor::Red);
+    board.PlaceBlock(2, 3, BlockColor::Red);
     board.Reset();
 
     assert(board.GetColor(2, 3) == BlockColor::Empty);
@@ -80,9 +80,9 @@ void TestFindEraseThreeDoesNotErase()
 {
     Board board;
 
-    board.PutOne(3, 0, BlockColor::Red);
-    board.PutOne(4, 0, BlockColor::Red);
-    board.PutOne(5, 0, BlockColor::Red);
+    board.PlaceBlock(3, 0, BlockColor::Red);
+    board.PlaceBlock(4, 0, BlockColor::Red);
+    board.PlaceBlock(5, 0, BlockColor::Red);
 
     assert(board.FindEraseBlocks() == false);
     assert(board.CountEraseBlocks() == 0);
@@ -93,10 +93,10 @@ void TestFindEraseHorizontal4()
 {
     Board board;
 
-    board.PutOne(2, 0, BlockColor::Red);
-    board.PutOne(3, 0, BlockColor::Red);
-    board.PutOne(4, 0, BlockColor::Red);
-    board.PutOne(5, 0, BlockColor::Red);
+    board.PlaceBlock(2, 0, BlockColor::Red);
+    board.PlaceBlock(3, 0, BlockColor::Red);
+    board.PlaceBlock(4, 0, BlockColor::Red);
+    board.PlaceBlock(5, 0, BlockColor::Red);
 
     assert(board.FindEraseBlocks() == true);
     assert(board.CountEraseBlocks() == 4);
@@ -107,10 +107,10 @@ void TestEraseBlocks()
 {
     Board board;
 
-    board.PutOne(2, 0, BlockColor::Red);
-    board.PutOne(3, 0, BlockColor::Red);
-    board.PutOne(4, 0, BlockColor::Red);
-    board.PutOne(5, 0, BlockColor::Red);
+    board.PlaceBlock(2, 0, BlockColor::Red);
+    board.PlaceBlock(3, 0, BlockColor::Red);
+    board.PlaceBlock(4, 0, BlockColor::Red);
+    board.PlaceBlock(5, 0, BlockColor::Red);
 
     assert(board.FindEraseBlocks() == true);
 
@@ -130,10 +130,10 @@ void TestFindEraseVertical4()
 {
     Board board;
 
-    board.PutOne(0, 0, BlockColor::Red);
-    board.PutOne(0, 1, BlockColor::Red);
-    board.PutOne(0, 2, BlockColor::Red);
-    board.PutOne(0, 3, BlockColor::Red);
+    board.PlaceBlock(0, 0, BlockColor::Red);
+    board.PlaceBlock(0, 1, BlockColor::Red);
+    board.PlaceBlock(0, 2, BlockColor::Red);
+    board.PlaceBlock(0, 3, BlockColor::Red);
 
     assert(board.FindEraseBlocks() == true);
     assert(board.CountEraseBlocks() == 4);
@@ -144,10 +144,10 @@ void TestFindEraseLShape4()
 {
     Board board;
 
-    board.PutOne(0, 0, BlockColor::Red);
-    board.PutOne(1, 0, BlockColor::Red);
-    board.PutOne(1, 1, BlockColor::Red);
-    board.PutOne(1, 2, BlockColor::Red);
+    board.PlaceBlock(0, 0, BlockColor::Red);
+    board.PlaceBlock(1, 0, BlockColor::Red);
+    board.PlaceBlock(1, 1, BlockColor::Red);
+    board.PlaceBlock(1, 2, BlockColor::Red);
 
     assert(board.FindEraseBlocks() == true);
     assert(board.CountEraseBlocks() == 4);
@@ -158,10 +158,10 @@ void TestFindEraseTShape4()
 {
     Board board;
 
-    board.PutOne(0, 0, BlockColor::Red);
-    board.PutOne(1, 0, BlockColor::Red);
-    board.PutOne(1, 1, BlockColor::Red);
-    board.PutOne(2, 0, BlockColor::Red);
+    board.PlaceBlock(0, 0, BlockColor::Red);
+    board.PlaceBlock(1, 0, BlockColor::Red);
+    board.PlaceBlock(1, 1, BlockColor::Red);
+    board.PlaceBlock(2, 0, BlockColor::Red);
 
     assert(board.FindEraseBlocks() == true);
     assert(board.CountEraseBlocks() == 4);
@@ -172,10 +172,10 @@ void TestFindEraseDifferentColorDoesNotErase()
 {
     Board board;
 
-    board.PutOne(2, 0, BlockColor::Red);
-    board.PutOne(3, 0, BlockColor::Blue);
-    board.PutOne(4, 0, BlockColor::Red);
-    board.PutOne(5, 0, BlockColor::Red);
+    board.PlaceBlock(2, 0, BlockColor::Red);
+    board.PlaceBlock(3, 0, BlockColor::Blue);
+    board.PlaceBlock(4, 0, BlockColor::Red);
+    board.PlaceBlock(5, 0, BlockColor::Red);
 
     assert(board.FindEraseBlocks() == false);
     assert(board.CountEraseBlocks() == 0);
@@ -186,10 +186,10 @@ void TestFindEraseDisconnectedPairsDoNotErase()
 {
     Board board;
 
-    board.PutOne(0, 0, BlockColor::Red);
-    board.PutOne(0, 1, BlockColor::Red);
-    board.PutOne(2, 0, BlockColor::Red);
-    board.PutOne(2, 1, BlockColor::Red);
+    board.PlaceBlock(0, 0, BlockColor::Red);
+    board.PlaceBlock(0, 1, BlockColor::Red);
+    board.PlaceBlock(2, 0, BlockColor::Red);
+    board.PlaceBlock(2, 1, BlockColor::Red);
 
     assert(board.FindEraseBlocks() == false);
     assert(board.CountEraseBlocks() == 0);
@@ -200,11 +200,11 @@ void TestFindEraseFiveBlocks()
 {
     Board board;
 
-    board.PutOne(0, 0, BlockColor::Red);
-    board.PutOne(1, 0, BlockColor::Red);
-    board.PutOne(2, 0, BlockColor::Red);
-    board.PutOne(3, 0, BlockColor::Red);
-    board.PutOne(4, 0, BlockColor::Red);
+    board.PlaceBlock(0, 0, BlockColor::Red);
+    board.PlaceBlock(1, 0, BlockColor::Red);
+    board.PlaceBlock(2, 0, BlockColor::Red);
+    board.PlaceBlock(3, 0, BlockColor::Red);
+    board.PlaceBlock(4, 0, BlockColor::Red);
 
     assert(board.FindEraseBlocks() == true);
     assert(board.CountEraseBlocks() == 5);
@@ -217,7 +217,7 @@ void TestHasFloatingBlocks()
 
     assert(board.HasFloatingBlocks() == false);
 
-    board.PutOne(0, 1, BlockColor::Red);
+    board.PlaceBlock(0, 1, BlockColor::Red);
 
     assert(board.HasFloatingBlocks() == true);
 }
@@ -227,7 +227,7 @@ void TestDropFloatingBlockToGround()
 {
     Board board;
 
-    board.PutOne(0, 1, BlockColor::Red);
+    board.PlaceBlock(0, 1, BlockColor::Red);
     board.DropFloatingBlocks();
 
     assert(board.GetColor(0, 0) == BlockColor::Red);
@@ -240,7 +240,7 @@ void TestDropFloatingBlocksOneStep()
 {
     Board board;
 
-    board.PutOne(0, 3, BlockColor::Red);
+    board.PlaceBlock(0, 3, BlockColor::Red);
 
     board.DropFloatingBlocks();
 
@@ -255,8 +255,8 @@ void TestDropFloatingBlocksStopsAboveBlock()
 {
     Board board;
 
-    board.PutOne(0, 2, BlockColor::Red);
-    board.PutOne(0, 0, BlockColor::Blue);
+    board.PlaceBlock(0, 2, BlockColor::Red);
+    board.PlaceBlock(0, 0, BlockColor::Blue);
 
     board.DropFloatingBlocks();
 

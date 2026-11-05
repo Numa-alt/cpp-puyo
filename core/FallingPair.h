@@ -33,7 +33,7 @@ public:
     {
         return mY;
     }
-    int GetPairX() const
+    int GetPartnerX() const
     {
         int x = mX;
         switch (mDirection)
@@ -51,7 +51,7 @@ public:
         }
         return x;
     }
-    int GetPairY() const
+    int GetPartnerY() const
     {
         int y = mY;
         switch (mDirection)

@@ -1,48 +1,33 @@
 #include "ArduinoRenderer.h"
 
-extern Adafruit_ST7789 tft;
+#include <SPI.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_ST7789.h>
+
+extern Adafruit_ST7789 gTft;
 
 // 盤面描画の原点と1マスのピクセルサイズ
 static constexpr int gBoardOffsetX = 8;
 static constexpr int gBoardOffsetY = 48;
 static constexpr int gBlockSize = 16;
 
-int CalcBoardX(int ix)
+static int CalcBoardX(int ix)
 {
     return gBoardOffsetX + ix * gBlockSize;
 }
-int CalcBoardY(int iy)
+static int CalcBoardY(int iy)
 {
     return gBoardOffsetY + (HEIGHT - 1 - iy) * gBlockSize;
 }
 
-
 void ClearScreen(std::uint16_t color)
 {
-    tft.fillScreen(color);
-}
-
-void DrawTitle()
-{
-    DrawText("TITLE", 100, 150, 0x7FFF, 0x0000, 2);
-    DrawText("PUSH BUTTON", 100, 166, 0x7FFF, 0x0000, 2);
-}
-
-void DrawGameOver()
-{
-    DrawText("GAME OVER", 100, 150, 0x7FFF, 0x0000, 2);
-    DrawText("PUSH BUTTON", 100, 166, 0x7FFF, 0x0000, 2);
-}
-
-void DrawGameClear()
-{
-    DrawText("GAME CLEAR", 100, 150, 0x7FFF, 0x0000, 2);
-    DrawText("PUSH BUTTON", 100, 166, 0x7FFF, 0x0000, 2);
+    gTft.fillScreen(color);
 }
 
 void DrawBlock(int ix, int iy, BlockColor blockColor)
 {
-    std::uint16_t color;
+    std::uint16_t color = ST77XX_BLACK;
     switch (blockColor)
     {
     case BlockColor::Red:       color = ST77XX_RED;     break;
@@ -52,10 +37,10 @@ void DrawBlock(int ix, int iy, BlockColor blockColor)
     case BlockColor::Empty:     color = ST77XX_BLACK;   break;
     }
 
-    int px = gBoardOffsetX + ix * gBlockSize;
-    int py = gBoardOffsetY + (HEIGHT - 1 - iy) * gBlockSize;
+    int px = CalcBoardX(ix);
+    int py = CalcBoardY(iy);
 
-    tft.fillRect(px, py, gBlockSize - 1, gBlockSize - 1, color);
+    gTft.fillRect(px, py, gBlockSize - 1, gBlockSize - 1, color);
 
 }
 
@@ -98,24 +83,6 @@ void DrawBoardDebug(int offsetX, const Board& board)
     }
 }
 
-void DrawFallingPair(const FallingPair& pair)
-{
-    int x = pair.GetX();
-    int y = pair.GetY();
-
-    DrawBlock(x, y, pair.GetColor(0));
-
-    switch (pair.GetDirection())
-    {
-    case Direction::Up:    ++y; break;
-    case Direction::Down:  --y; break;
-    case Direction::Left:  --x; break;
-    case Direction::Right: ++x; break;
-    }
-
-    DrawBlock(x, y, pair.GetColor(1));
-}
-
 void DrawNextPair(const FallingPair& pair)
 {
     // 軸のブロック
@@ -127,8 +94,8 @@ void DrawNextPair(const FallingPair& pair)
 
 void DrawText(const char* text, int x, int y, std::uint16_t color, std::uint16_t backColor, int size)
 {
-    tft.setCursor(x, y);
-    tft.setTextColor(color, backColor);
-    tft.setTextSize(size);
-    tft.print(text);
+    gTft.setCursor(x, y);
+    gTft.setTextColor(color, backColor);
+    gTft.setTextSize(size);
+    gTft.print(text);
 }

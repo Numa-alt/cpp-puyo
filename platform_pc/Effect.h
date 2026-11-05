@@ -13,7 +13,7 @@ class Effect
 private:
     std::uint32_t mLifeTimeMs = 0;
     std::uint32_t mStartTimeMs = 0;
-    bool mPause = false;
+    bool mIsPaused = false;
     std::uint32_t mPauseTimeMs = 0;
     float mRate = 0.0f;
 public:

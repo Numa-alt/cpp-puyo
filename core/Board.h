@@ -64,7 +64,7 @@ public:
     void PutPair(const FallingPair& pair);
 
     //1ブロック配置
-    void PutOne(int x, int y, BlockColor color);
+    void PlaceBlock(int x, int y, BlockColor color);
 
     //浮いているブロックがあるか？
     bool HasFloatingBlocks() const;

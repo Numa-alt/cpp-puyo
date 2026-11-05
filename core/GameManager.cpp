@@ -141,12 +141,8 @@ GameState GameManager::GetState() const
 {
     return mGameState;
 }
-std::size_t GameManager::GetGameEventEnd()const
-{
-    return mGameEventManager.GetEnd();
-}
 
-bool GameManager::IsPause() const
+bool GameManager::IsPaused() const
 {
-    return mPlayingManager.IsPause();
+    return mPlayingManager.IsPaused();
 }
