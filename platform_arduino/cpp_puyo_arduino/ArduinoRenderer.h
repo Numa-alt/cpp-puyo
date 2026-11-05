@@ -28,6 +28,3 @@ void DrawText(const char* text, int x, int y, std::uint16_t color, std::uint16_t
 
 // デバッグ描画
 void DrawBoardDebug(int offsetX, const Board& board);
-
-
-

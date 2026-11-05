@@ -198,11 +198,11 @@ void DrawPlaying()
 
     target = gameManager.GetBoard();
 
-    auto fp = gameManager.GetFallingPair();
-    if (fp.GetColor(0) != BlockColor::Empty || fp.GetColor(1) != BlockColor::Empty)
+    auto fallingPair = gameManager.GetFallingPair();
+    if (fallingPair.GetColor(0) != BlockColor::Empty || fallingPair.GetColor(1) != BlockColor::Empty)
     {
-        target.PutOne(fp.GetX(), fp.GetY(), fp.GetColor(0));
-        target.PutOne(fp.GetPairX(), fp.GetPairY(), fp.GetColor(1));
+        target.PutOne(fallingPair.GetX(), fallingPair.GetY(), fallingPair.GetColor(0));
+        target.PutOne(fallingPair.GetPairX(), fallingPair.GetPairY(), fallingPair.GetColor(1));
     }
 
     // 前回表示との差分セルだけLCDへ描画する
@@ -272,8 +272,8 @@ void DrawPlaying()
     {
         while (!gameManager.IsGameEventEmpty())
         {
-            auto ge = gameManager.PopGameEvent();
-            switch (ge.GetType())
+            auto gameEvent = gameManager.PopGameEvent();
+            switch (gameEvent.GetType())
             {
             case GameEventType::Chain:
                 break;

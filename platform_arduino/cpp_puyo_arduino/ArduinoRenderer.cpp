@@ -60,13 +60,13 @@ void DrawBlock(int ix, int iy, BlockColor blockColor)
 }
 
 // 前回盤面と比較し、変化したセルだけをLCDへ描画する
-void DrawBoard(const Board& board, const Board& boardBefore)
+void DrawBoard(const Board& board, const Board& previousBoard)
 {
     for (int y = 0; y < HEIGHT; ++y)
     {
         for (int x = 0; x < WIDTH; ++x)
         {
-            if (board.GetColor(x, y) != boardBefore.GetColor(x, y))
+            if (board.GetColor(x, y) != previousBoard.GetColor(x, y))
             {
                 DrawBlock(x, y, board.GetColor(x, y));
             }
@@ -118,10 +118,10 @@ void DrawFallingPair(const FallingPair& pair)
 
 void DrawNextPair(const FallingPair& pair)
 {
-    //軸のブロック
+    // 軸のブロック
     DrawBlock(WIDTH + 1, HEIGHT - 2, pair.GetColor(0));
 
-    //相方のブロック
+    // 相方のブロック
     DrawBlock(WIDTH + 1, HEIGHT - 3, pair.GetColor(1));
 }
 
