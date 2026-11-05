@@ -24,64 +24,20 @@ void ClearScreen()
 
 void DrawTitle()
 {
-    int x = 100;
-    int y = 150;
-    std::uint16_t color = 0x7FFF;
-    std::uint16_t backColor = 0x0000;
-    int size = 1;
-
-    tft.setCursor(x, y);
-    tft.setTextColor(color, backColor);
-    tft.setTextSize(size);
-    tft.print("TITLE");
-
-    y += 16;
-    tft.setCursor(x, y);
-    tft.setTextColor(color, backColor);
-    tft.setTextSize(size);
-    tft.print("BUTTON");
-
+    DrawText("TITLE", 100, 150, 0x7FFF, 0x0000, 2);
+    DrawText("PUSH BUTTON", 100, 166, 0x7FFF, 0x0000, 2);
 }
 
 void DrawGameOver()
 {
-    int x = 100;
-    int y = 150;
-    std::uint16_t color = 0x7FFF;
-    std::uint16_t backColor = 0x0000;
-    int size = 1;
-
-    tft.setCursor(x, y);
-    tft.setTextColor(color, backColor);
-    tft.setTextSize(size);
-    tft.print("GAME OVER");
-
-    y += 16;
-    tft.setCursor(x, y);
-    tft.setTextColor(color, backColor);
-    tft.setTextSize(size);
-    tft.print("PUSH BUTTON");
+    DrawText("GAME OVER", 100, 150, 0x7FFF, 0x0000, 2);
+    DrawText("PUSH BUTTON", 100, 166, 0x7FFF, 0x0000, 2);
 }
 
 void DrawGameClear()
 {
-    int x = 100;
-    int y = 150;
-    std::uint16_t color = 0x7FFF;
-    std::uint16_t backColor = 0x0000;
-    int size = 1;
-
-    tft.setCursor(x, y);
-    tft.setTextColor(color, backColor);
-    tft.setTextSize(size);
-    tft.print("GAME CLEAR");
-
-    y += 16;
-    tft.setCursor(x, y);
-    tft.setTextColor(color, backColor);
-    tft.setTextSize(size);
-    tft.print("PUSH BUTTON");
-
+    DrawText("GAME CLEAR", 100, 150, 0x7FFF, 0x0000, 2);
+    DrawText("PUSH BUTTON", 100, 166, 0x7FFF, 0x0000, 2);
 }
 
 void DrawBlock(int ix, int iy, BlockColor blockColor)
@@ -102,6 +58,7 @@ void DrawBlock(int ix, int iy, BlockColor blockColor)
     tft.fillRect(px, py, gBlockSize - 1, gBlockSize - 1, color);
 
 }
+
 void DrawBoard(const Board& board, const Board& boardBefore)
 {
     for (int y = 0; y < HEIGHT; ++y)
@@ -115,6 +72,7 @@ void DrawBoard(const Board& board, const Board& boardBefore)
         }
     }
 }
+
 void DrawBoardFix(const Board& board)
 {
     for (int y = 0; y < HEIGHT; ++y)
@@ -159,18 +117,10 @@ void DrawFallingPair(const FallingPair& pair)
 //Next
 void DrawNextPair(int x, int y, const FallingPair& pair)
 {
-    std::uint16_t color = 0x7FFF;
-    int size = 1;
-
-    std::string nextTxt{ "NEXT" };
-    tft.setCursor(x, y);
-    tft.setTextColor(color);
-    tft.setTextSize(size);
-    tft.print(nextTxt.c_str());
-
-
+    //軸のブロック
     DrawBlock(WIDTH + 1, HEIGHT - 2, pair.GetColor(0));
 
+    //相方のブロック
     switch (pair.GetDirection())
     {
     case Direction::Up:    ++y; break;
@@ -178,41 +128,18 @@ void DrawNextPair(int x, int y, const FallingPair& pair)
     case Direction::Left:  --x; break;
     case Direction::Right: ++x; break;
     }
-
     DrawBlock(WIDTH + 1, HEIGHT - 3, pair.GetColor(1));
 }
 
-//Total
-void DrawTotal(int x, int y, std::uint32_t totalEraseBlockCount)
+//Text
+void DrawText(const char* text, int x, int y, std::uint16_t color, std::uint16_t backColor, int size)
 {
-    std::uint16_t color = 0x7FFF;
-    std::uint16_t backColor = 0x0000;
-    int size = 1;
-
-
-    std::string totalText{ "TOTAL " };
-    totalText += std::to_string(totalEraseBlockCount);
     tft.setCursor(x, y);
     tft.setTextColor(color, backColor);
     tft.setTextSize(size);
-    tft.print(totalText.c_str());
-
+    tft.print(text);
 }
 
-//Score
-void DrawScore(int x, int y, std::uint32_t score)
-{
-    std::uint16_t color = 0x7FFF;
-    std::uint16_t backColor = 0x0000;
-    int size = 1;
-
-    std::string scoreText{ "SCORE " };
-    scoreText += std::to_string(score);
-    tft.setCursor(x, y);
-    tft.setTextColor(color, backColor);
-    tft.setTextSize(size);
-    tft.print(scoreText.c_str());
-}
 
 void DrawPause(int x, int y)
 {

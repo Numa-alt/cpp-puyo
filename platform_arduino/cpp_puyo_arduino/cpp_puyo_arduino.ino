@@ -13,6 +13,12 @@ GameState gOldGameState = GameState::Title;
 PlayState gPlayStateBefore = PlayState::Result;
 Board gBoardBefore{};
 FallingPair gFallingPairBefore{};
+//表示している消した数合計
+int gDispTotalEraseBlockCount = -1;
+//表示しているスコア
+int gDispScore = -1;
+//表示しているNextPair
+FallingPair gDispNextPair{};
 
 bool gIsDrawPause = false;
 
@@ -34,6 +40,33 @@ std::uint32_t button_mask = (1UL << BUTTON_X) | (1UL << BUTTON_Y) | (1UL << BUTT
 
 #define BIT(_x) (1UL<<(_x))
 
+//表示できる最大消した数
+static constexpr int gMaxDispTotalEraseBlockCount = 99999999;
+//消した数
+static constexpr int gTotalTextX = 120;
+static constexpr int gTotalTextY = 24;
+static constexpr std::uint16_t gTotalTextColor = 0x7FFF;
+static constexpr std::uint16_t gTotalTextBackColor = 0x0000;
+
+//表示できる最大得点
+static constexpr int gMaxDispScore = 99999999;
+//得点
+static constexpr int gScoreTextX = 8;
+static constexpr int gScoreTextY = 24;
+static constexpr std::uint16_t gScoreTextColor = 0x7FFF;
+static constexpr std::uint16_t gScoreTextBackColor = 0x0000;
+
+//NEXT PAIR
+static constexpr int gNextPairTextX = 120;
+static constexpr int gNextPairTextY = 50;
+static constexpr std::uint16_t gNextPairTextColor = 0x7FFF;
+static constexpr std::uint16_t gNextPairTextBackColor = 0x0000;
+
+//PAUSE
+static constexpr int gPauseTextX = 16;
+static constexpr int gPauseTextY = 100;
+static constexpr std::uint16_t gPauseTextColor = 0x7FFF;
+static constexpr std::uint16_t gPauseTextBackColor = 0x0000;
 
 void setup()
 {
@@ -138,7 +171,8 @@ std::uint32_t GetHeld()
     {
         held |= ButtonBit(Button::Up);
     }
-    if (is.rotate) {
+    if (is.rotate)
+    {
         held |= ButtonBit(Button::Rotate);
     }
     return held;
@@ -148,7 +182,8 @@ void DrawPlaying()
 {
     if (gameManager.GetPlayState() != gPlayStateBefore)
     {
-        if (gameManager.GetPlayState() == PlayState::Control) {
+        if (gameManager.GetPlayState() == PlayState::Control)
+        {
             gBoardBefore = gameManager.GetBoard();
         }
     }
@@ -170,21 +205,52 @@ void DrawPlaying()
     DrawBoard(target, gBoardBefore);
     gBoardBefore = target;
 
-    //Next
-    DrawNextPair(120, 50, gameManager.GetNextPair());
+    //NextPair
+    if (isDefferentPair(gameManager.GetNextPair(), gDispNextPair))
+    {
+        //更新された時だけ描画
+        gDispNextPair = gameManager.GetNextPair();
+        DrawNextPair(gNextPairTextX, gNextPairTextY, gameManager.GetNextPair());
+    }
 
     //Total
-    DrawTotal(8, 24, gameManager.GetTotalEraseBlockCount());
+    if (gameManager.GetTotalEraseBlockCount() != gDispTotalEraseBlockCount)
+    {
+        //更新された時だけ描画
+        gDispTotalEraseBlockCount = gameManager.GetTotalEraseBlockCount();
+        //最大値確認
+        if (gDispTotalEraseBlockCount > gMaxDispTotalEraseBlockCount)
+        {
+            gDispTotalEraseBlockCount = gMaxDispTotalEraseBlockCount;
+        }
+        //数字ではなく文字列で保存し、桁ごとに数字が変わったら書き換えるようにしたほうがいいかな
+        char totalText[9]{};
+        snprintf(totalText, sizeof(totalText), "%8d", gDispTotalEraseBlockCount);
+        DrawText(totalText, gTotalTextX, gTotalTextY, gTotalTextColor, gTotalTextBackColor, 1);
+    }
 
-    //Score
-    DrawScore(8, 2, gameManager.GetScore());
+    //得点
+    if (gameManager.GetScore() != gDispScore)
+    {
+        //更新された時だけ描画
+        gDispScore = gameManager.GetScore();
+        //最大値確認
+        if (gDispScore > gMaxDispScore)
+        {
+            gDispScore = gMaxDispScore;
+        }
+        char scoreText[9]{};
+        snprintf(scoreText, sizeof(scoreText), "%8d", gDispScore);
+        DrawText(scoreText, gScoreTextX, gScoreTextY + 8, gScoreTextColor, gScoreTextBackColor, 1);
+    }
 
+    //Pause
     if (gameManager.IsPause())
     {
         if (!gIsDrawPause)
         {
             gIsDrawPause = true;
-            DrawPause(16, 100);
+            DrawText("PAUSE", gPauseTextX, gPauseTextY + 8, gPauseTextColor, gPauseTextBackColor, 1);
         }
     }
     else
@@ -232,6 +298,40 @@ void DrawPlaying()
         }
     }
 }
+//違うか？
+bool isDefferentPair(const FallingPair& a, const FallingPair& b)
+{
+    if (a.GetColor(0) != b.GetColor(0))
+    {
+        return false;
+    }
+    if (a.GetColor(1) != b.GetColor(1))
+    {
+        return false;
+    }
+    return true;
+}
+//プレイ開始時の処理
+void StartPlaying()
+{
+    gBoardBefore.Fill(BlockColor::Red);
+    gIsDrawPause = false;
+
+    //NEXT PAIR TEXT
+    DrawText("NEXT", gNextPairTextX, gNextPairTextY, gNextPairTextColor, gNextPairTextBackColor, 1);
+
+    //TOTAL TEXT
+    DrawText("TOTAL", gTotalTextX, gTotalTextY, gTotalTextColor, gTotalTextBackColor, 1);
+
+    //SCORE TEXT
+    DrawText("SCORE", gScoreTextX, gScoreTextY, gScoreTextColor, gScoreTextBackColor, 1);
+
+    //初回は描画するように
+    gDispTotalEraseBlockCount = -1;
+    gDispScore = -1;
+    gDispNextPair.SetColor(0, BlockColor::Empty);
+    gDispNextPair.SetColor(1, BlockColor::Empty);
+}
 
 void loop()
 {
@@ -244,11 +344,12 @@ void loop()
     if (gameManager.GetState() != gOldGameState)
     {
         gOldGameState = gameManager.GetState();
+
         ClearScreen();
+
         if (gameManager.GetState() == GameState::Playing)
         {
-            gBoardBefore.Fill(BlockColor::Red);
-            gIsDrawPause = false;
+            StartPlaying();
         }
     }
 

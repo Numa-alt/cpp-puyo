@@ -6,6 +6,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
 
+
 int CalcBoardX(int ix);
 int CalcBoardY(int iy);
 
@@ -19,9 +20,7 @@ void DrawBoardFix(const Board& board);
 void DrawFallingPair(const FallingPair& pair);
 
 void DrawNextPair(int x, int y, const FallingPair& pair);
-void DrawTotal(int x, int y, std::uint32_t totalEraseBlockCount);
-void DrawScore(int x, int y, std::uint32_t score);
-void DrawPause(int x, int y);
+void DrawText(const char* text, int x, int y, std::uint16_t color, std::uint16_t backColor, int size);
 
 void DrawBlock(int ix, int iy, BlockColor color);
 
