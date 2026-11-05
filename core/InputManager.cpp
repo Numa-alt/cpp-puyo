@@ -19,7 +19,7 @@ void InputManager::Execute(std::uint32_t systemTimeMs, std::uint32_t held)
                 mLastRepeatTimeMs[i] = systemTimeMs;
                 mRepeatCount[i] = 0;
             }
-            //リピート入力の初回だけ多めに待つ
+            // リピート入力の初回だけ多めに待つ
             std::uint32_t intervalTimeMs = 300;
             if (mRepeatCount[i] > 0)
             {

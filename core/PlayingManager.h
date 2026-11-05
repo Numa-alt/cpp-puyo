@@ -18,8 +18,8 @@ private:
     GameResult mGameResult = GameResult::Playing;
     bool mIsPaused = false;
 
-    std::uint32_t mTotalEraseBlockCount = 0;// 全部で何個消したか
-    std::uint32_t mEraseBlockCountForSpeedUp = 0;// 落下速度を加速させるための消したブロックのカウンタ
+    std::uint32_t mTotalEraseBlockCount = 0;
+    std::uint32_t mEraseBlockCountForSpeedUp = 0;
 
     std::uint32_t mRandomSeed = 0;
 
@@ -81,7 +81,6 @@ public:
 
     void Execute(const InputManager& input, std::uint32_t systemTimeMs, GameEventManager& gameEventManager);
 
-    // GameManager側から結果を取得するため
     GameResult GetGameResult() const;
 
     const FallingPair& GetFallingPair() const;
