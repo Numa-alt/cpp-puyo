@@ -2,6 +2,7 @@
 
 extern Adafruit_ST7789 tft;
 
+// 盤面描画の原点と1マスのピクセルサイズ
 static constexpr int gBoardOffsetX = 8;
 static constexpr int gBoardOffsetY = 48;
 static constexpr int gBlockSize = 16;
@@ -12,7 +13,7 @@ int CalcBoardX(int ix)
 }
 int CalcBoardY(int iy)
 {
-    return gBoardOffsetY - iy * gBlockSize;
+    return gBoardOffsetY + (HEIGHT - 1 - iy) * gBlockSize;
 }
 
 
@@ -59,6 +60,7 @@ void DrawBlock(int ix, int iy, BlockColor blockColor)
 
 }
 
+// 前回盤面と比較し、変化したセルだけをLCDへ描画する
 void DrawBoard(const Board& board, const Board& boardBefore)
 {
     for (int y = 0; y < HEIGHT; ++y)
@@ -73,7 +75,8 @@ void DrawBoard(const Board& board, const Board& boardBefore)
     }
 }
 
-void DrawBoardFix(const Board& board)
+// 盤面全体を強制的に再描画する
+void DrawBoardFull(const Board& board)
 {
     for (int y = 0; y < HEIGHT; ++y)
     {
@@ -84,6 +87,7 @@ void DrawBoardFix(const Board& board)
     }
 }
 
+// デバッグ用：X方向にオフセットして盤面全体を描画する
 void DrawBoardDebug(int ofsx, const Board& board)
 {
     for (int y = 0; y < HEIGHT; ++y)
@@ -111,44 +115,21 @@ void DrawFallingPair(const FallingPair& pair)
     }
 
     DrawBlock(x, y, pair.GetColor(1));
-
 }
 
-//Next
-void DrawNextPair(int x, int y, const FallingPair& pair)
+void DrawNextPair(const FallingPair& pair)
 {
     //軸のブロック
     DrawBlock(WIDTH + 1, HEIGHT - 2, pair.GetColor(0));
 
     //相方のブロック
-    switch (pair.GetDirection())
-    {
-    case Direction::Up:    ++y; break;
-    case Direction::Down:  --y; break;
-    case Direction::Left:  --x; break;
-    case Direction::Right: ++x; break;
-    }
     DrawBlock(WIDTH + 1, HEIGHT - 3, pair.GetColor(1));
 }
 
-//Text
 void DrawText(const char* text, int x, int y, std::uint16_t color, std::uint16_t backColor, int size)
 {
     tft.setCursor(x, y);
     tft.setTextColor(color, backColor);
     tft.setTextSize(size);
     tft.print(text);
-}
-
-
-void DrawPause(int x, int y)
-{
-    std::uint16_t color = 0x7FFF;
-    std::uint16_t backColor = 0x0000;
-    int size = 1;
-
-    tft.setCursor(x, y);
-    tft.setTextColor(color, backColor);
-    tft.setTextSize(size);
-    tft.print("PAUSE");
 }
