@@ -35,7 +35,6 @@ private:
     // 一番上の段をHEIGHT-1 一番下の段を0とする
     BlockColor mCells[HEIGHT][WIDTH];
 
-    //消えるブロックにフラグを立てる
     EraseFlags mEraseFlags;
 
     void SearchConnectedBlocks(int x, int y, BlockColor color, EraseFlags& checkedFlags, EraseFlags& connectedFlags, int& count);
@@ -57,39 +56,30 @@ public:
         mEraseFlags.Init();
     }
 
-    //ペアを配置できる？
     bool CanPlace(const FallingPair& pair) const;
 
-    //ペアを配置
-    void PutPair(const FallingPair& pair);
+    void PlacePair(const FallingPair& pair);
 
-    //1ブロック配置
     void PlaceBlock(int x, int y, BlockColor color);
 
-    //浮いているブロックがあるか？
     bool HasFloatingBlocks() const;
 
-    //浮いているブロックを1段下げる
     void DropFloatingBlocks();
 
-    //消えるブロックにフラグを立てる
+    // 消去対象を記録し、1つ以上存在する場合はtrueを返す
     bool FindEraseBlocks();
 
     std::uint32_t CountEraseBlocks() const;
 
-    //mEraseFlagsに従ってブロックを消す
     void EraseBlocks();
 
     BlockColor GetColor(int x, int y) const;
 
-    //指定のブロックは消えるフラグが立っている？
     bool IsEraseBlock(int x, int y) const;
 
-    //真ん中あたりの消えるブロックの位置を取得する
     void SearchCenterEraseBlock(int& x, int& y) const;
 
     void Fill(BlockColor color);
-
 };
 
 static_assert(sizeof(Board) == 96, "Board size changed");

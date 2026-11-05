@@ -47,11 +47,12 @@ std::uint32_t PlayingManager::GetAutoFallIntervalMs()const
 {
     return mAutoFallIntervalMs;
 }
+
 std::uint32_t PlayingManager::GetTotalEraseBlockCount()const
 {
     return mTotalEraseBlockCount;
 }
-// GameManager側から結果を取得するため
+
 GameResult PlayingManager::GetGameResult() const
 {
     return mGameResult;
@@ -66,10 +67,10 @@ void PlayingManager::Start(std::uint32_t systemTimeMs, GameEventManager& gameEve
     mFallingPair.Reset();
     mNextPair.Reset();
 
-    mTotalEraseBlockCount = 0;//全部で何個消したか
-    mEraseBlockCountForSpeedUp = 0;//落下速度を加速させるための消したブロックのカウンタ
+    mTotalEraseBlockCount = 0;
+    mEraseBlockCountForSpeedUp = 0;
 
-    mAutoFallIntervalMs = InitialAutoFallIntervalMs;//開始時はInitialAutoFallIntervalMsミリ秒ごとに１マス落下。ブロックを消していくと徐々に少なくする
+    mAutoFallIntervalMs = InitialAutoFallIntervalMs;
 
     mDropStartTimeMs = 0;
 
@@ -90,13 +91,13 @@ void PlayingManager::Start(std::uint32_t systemTimeMs, GameEventManager& gameEve
     mIsPaused = false;
 }
 
-//落下時間計測のタイマーをリセット
+// 落下時間計測のタイマーをリセット
 void PlayingManager::ResetAutoFallTimer()
 {
-    //現在の時刻でリセットする
+    // 現在の時刻でリセットする
     mLastAutoFallTimeMs = mSystemTimeMs;
 }
-//前回の落下から一定時間経過したか？
+// 前回の落下から一定時間経過したか？
 bool PlayingManager::IsAutoFallDue() const
 {
     if ((mSystemTimeMs - mLastAutoFallTimeMs) >= mAutoFallIntervalMs)
@@ -145,7 +146,6 @@ void PlayingManager::SetState(PlayState next, GameEventManager& gameEventManager
             // 次のブロックの色をランダムで設定する
             GenerateNextPair();
 
-            //連鎖数リセット
             mChainCount = 0;
 
             mSpawnStartTimeMs = mSystemTimeMs;
@@ -154,7 +154,7 @@ void PlayingManager::SetState(PlayState next, GameEventManager& gameEventManager
 
     case PlayState::Control:
         {
-            //落下タイマーをリセット
+            // 落下タイマーをリセット
             ResetAutoFallTimer();
             break;
         }
@@ -175,15 +175,16 @@ void PlayingManager::SetState(PlayState next, GameEventManager& gameEventManager
         {
             mEraseStartTimeMs = mSystemTimeMs;
 
-            //連鎖数増加
             mChainCount++;
 
-            //消えるブロック
+            // 消えるブロック
             {
                 for (int ix = 0; ix < WIDTH; ix++)
                 {
-                    for (int iy = 0; iy < HEIGHT; iy++) {
-                        if (mBoard.IsEraseBlock(ix, iy)) {
+                    for (int iy = 0; iy < HEIGHT; iy++)
+                    {
+                        if (mBoard.IsEraseBlock(ix, iy))
+                        {
                             BlockColor color = mBoard.GetColor(ix, iy);
                             PushEvent(gameEventManager, GameEventType::BlockErased, ix, iy, static_cast<std::uint16_t>(color));
                         }
@@ -191,11 +192,11 @@ void PlayingManager::SetState(PlayState next, GameEventManager& gameEventManager
                 }
             }
 
-            //連鎖数
+            // 連鎖数
             {
                 int x = 0;
                 int y = 0;
-                //真ん中あたりの消えるブロックの位置を取得する
+                //消去対象を囲む矩形の中心座標を取得
                 mBoard.SearchCenterEraseBlock(x, y);
                 PushEvent(gameEventManager, GameEventType::Chain, x, y, static_cast<std::uint16_t>(mChainCount));
             }
@@ -220,6 +221,7 @@ void PlayingManager::Execute(const InputManager& input, std::uint32_t systemTime
 {
     if (input.IsPressed(Button::Up))
     {
+        // Pause中の経過時間を各タイマーへ加算し、ゲーム内時間から除外する
         if (mIsPaused)
         {
             std::uint32_t addTimeMs = (systemTimeMs - mPauseStartTimeMs);
@@ -306,7 +308,7 @@ void PlayingManager::Control(const InputManager& input, GameEventManager& gameEv
     else if (input.IsRepeat(Button::Down)) {
         FallingPair pair = mFallingPair;
         pair.Move(0, -1);
-        if (mBoard.CanPlace(pair)) {//下へ移動可能？
+        if (mBoard.CanPlace(pair)) {// 下へ移動可能？
             // 1段下へ移動
             mFallingPair = pair;
         }
@@ -385,7 +387,7 @@ void PlayingManager::Control(const InputManager& input, GameEventManager& gameEv
 // 着地処理
 void PlayingManager::Land(GameEventManager& gameEventManager)
 {
-    mBoard.PutPair(mFallingPair);
+    mBoard.PlacePair(mFallingPair);
 
     mFallingPair.SetColor(0, BlockColor::Empty);
     mFallingPair.SetColor(1, BlockColor::Empty);
@@ -428,7 +430,7 @@ void PlayingManager::Erase(GameEventManager& gameEventManager)
     if ((mSystemTimeMs - mEraseStartTimeMs) >= EraseDurationMs) // 消去処理終了？
     {
         std::uint32_t eraseBlockCount = mBoard.CountEraseBlocks();
-        // スコア計算
+
         mScore += CalcScore(eraseBlockCount, mChainCount);
 
         mTotalEraseBlockCount += eraseBlockCount;// 全部で何個消したか
@@ -445,7 +447,6 @@ void PlayingManager::Erase(GameEventManager& gameEventManager)
             mAutoFallIntervalMs = std::max(MinAutoFallIntervalMs, mAutoFallIntervalMs - AutoFallDecreaseMs);
         }
 
-        // ブロックを消す
         mBoard.EraseBlocks();
 
         if (mBoard.HasFloatingBlocks()) // 浮いているブロックがある？

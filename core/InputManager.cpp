@@ -14,10 +14,8 @@ void InputManager::Execute(std::uint32_t systemTimeMs, std::uint32_t held)
         {
             if (!(mHeld & f))
             {
-                //前回押されておらず、今回押されたとき
                 mPressed |= f;
                 mRepeat |= f;
-                //押され続ける時間を計測開始
                 mLastRepeatTimeMs[i] = systemTimeMs;
                 mRepeatCount[i] = 0;
             }

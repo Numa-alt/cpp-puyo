@@ -126,10 +126,10 @@ public:
     [[nodiscard]] bool Push(GameEventType type, int x, int y, std::uint16_t value)
     {
         std::size_t next = (mWriteIndex + 1) % MaxEvents;
-        //次の書き込み先が先頭なら満杯
+        // 次の書き込み先が先頭なら満杯
         if (next == mReadIndex)
         {
-            //満杯：上書きせず捨てる
+            // 満杯：上書きせず捨てる
             return false;
         }
         mGameEvents[mWriteIndex].Set(type, x, y, value);

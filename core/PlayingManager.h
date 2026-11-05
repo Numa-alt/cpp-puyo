@@ -23,10 +23,10 @@ private:
 
     std::uint32_t mRandomSeed = 0;
 
-    // この時間経過すると操作中のブロックが１マス下に落ちる(ミリ秒)
+    // 自動落下の間隔（ミリ秒）
     std::uint32_t mAutoFallIntervalMs = 0;
 
-    // 現在の時間を保持し、mAutoFallIntervalMs分時間が経過したらリセット(ミリ秒)
+    // 前回、自動落下を開始した時刻
     std::uint32_t mLastAutoFallTimeMs = 0;
 
     // 落下開始時の時間

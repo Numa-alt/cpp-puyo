@@ -55,7 +55,7 @@ public:
     std::size_t GetCount() const;
 };
 
-//ブロック消去エフェクト
+// ブロック消去エフェクト
 class EffectBlockErase : public Effect
 {
 private:
@@ -78,7 +78,7 @@ public:
     void Draw(SDL_Renderer* renderer) override;
 };
 
-//連鎖数エフェクト
+// 連鎖数エフェクト
 class EffectChain : public Effect
 {
 private:

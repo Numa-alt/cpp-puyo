@@ -52,7 +52,7 @@ enum class Direction
     Left,
 };
 
-//ボタン番号
+// ボタン番号
 enum class Button
 {
     Rotate = 0,
@@ -63,7 +63,7 @@ enum class Button
     Max
 };
 
-//ボタン番号をビットに変換
+// ボタン番号をビットに変換
 inline std::uint32_t ButtonBit(Button button)
 {
     return 1u << static_cast<std::uint32_t>(button);
