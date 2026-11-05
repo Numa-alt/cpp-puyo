@@ -10,8 +10,8 @@
 
 GameManager gameManager;
 GameState gPreviousGameState = GameState::Title;
-PlayState gPlayStateBefore = PlayState::Result;
-Board gBoardBefore{};
+PlayState gPreviousPlayState = PlayState::Result;
+Board gPreviousBoard{};
 
 int gDisplayedTotalEraseBlockCount = -1;
 int gDisplayedScore = -1;
@@ -119,8 +119,6 @@ struct InputState
 };
 
 
-InputState ReadInput();
-
 InputState ReadInput()
 {
     constexpr std::uint32_t JoystickCenter = 512;
@@ -151,7 +149,7 @@ InputState ReadInput()
 
     std::uint32_t buttons = ss.digitalReadBulk(gButtonMask);
 
-    // INPUT_PULLUPのため、ボタン押下時はLOWになる buttonのbitが0ならON
+    // INPUT_PULLUPのため、ボタン押下時は対応bitが0になる
     inputState.rotate = !(buttons & BIT(BUTTON_A));
 
     return inputState;
@@ -184,14 +182,14 @@ std::uint32_t ReadHeldButtons()
     return held;
 }
 
-// Control開始時は固定済み盤面を基準にして差分描画を開始する
 void DrawPlaying()
 {
-    if (gameManager.GetPlayState() != gPlayStateBefore)
+    if (gameManager.GetPlayState() != gPreviousPlayState)
     {
+        // Control開始時は固定済み盤面を基準にして差分描画を開始する
         if (gameManager.GetPlayState() == PlayState::Control)
         {
-            gBoardBefore = gameManager.GetBoard();
+            gPreviousBoard = gameManager.GetBoard();
         }
     }
 
@@ -208,8 +206,8 @@ void DrawPlaying()
     }
 
     // 前回表示との差分セルだけLCDへ描画する
-    DrawBoard(target, gBoardBefore);
-    gBoardBefore = target;
+    DrawBoard(target, gPreviousBoard);
+    gPreviousBoard = target;
 
     // SPI描画負荷を減らすため、UIは値が変化した場合だけ更新する
 
@@ -222,7 +220,7 @@ void DrawPlaying()
     if (gameManager.GetTotalEraseBlockCount() != gDisplayedTotalEraseBlockCount)
     {
         gDisplayedTotalEraseBlockCount = gameManager.GetTotalEraseBlockCount();
-        /// 表示桁数を超えないよう上限値でクランプする
+        // 表示桁数を超えないよう上限値でクランプする
         if (gDisplayedTotalEraseBlockCount > gMaxDisplayedTotalEraseBlockCount)
         {
             gDisplayedTotalEraseBlockCount = gMaxDisplayedTotalEraseBlockCount;
@@ -266,9 +264,9 @@ void DrawPlaying()
     // Control以外では操作中ぷよを前回盤面に残さず、固定盤面を描画基準にする
     if (gameManager.GetPlayState() != PlayState::Control)
     {
-        gBoardBefore = gameManager.GetBoard();
+        gPreviousBoard = gameManager.GetBoard();
     }
-    gPlayStateBefore = gameManager.GetPlayState();
+    gPreviousPlayState = gameManager.GetPlayState();
 
     // Arduino版では未使用のイベントも必ずPopし、固定長キューが詰まるのを防ぐ
     {
@@ -304,7 +302,7 @@ bool IsDifferentPair(const FallingPair& a, const FallingPair& b)
 
 void InitializePlayingDisplay()
 {
-    gBoardBefore.Fill(BlockColor::Red);
+    gPreviousBoard.Fill(BlockColor::Red);
     gIsPauseDisplayed = false;
 
     DrawText("NEXT", gNextPairTextX, gNextPairTextY, gNextPairTextColor, gNextPairTextBackColor, 1);
@@ -333,7 +331,7 @@ void loop()
         gPreviousGameState = gameManager.GetState();
 
         // GameStateが切り替わった時だけ画面全体を初期化する
-        ClearScreen();
+        ClearScreen(gGameBgColor);
 
         if (gameManager.GetState() == GameState::Playing)
         {

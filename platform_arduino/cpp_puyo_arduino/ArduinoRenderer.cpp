@@ -17,10 +17,9 @@ int CalcBoardY(int iy)
 }
 
 
-void ClearScreen()
+void ClearScreen(std::uint16_t color)
 {
-    std::uint16_t dark_glay = 8 | (8 << 5) | (8 << 10);
-    tft.fillScreen(dark_glay);
+    tft.fillScreen(color);
 }
 
 void DrawTitle()
@@ -88,13 +87,13 @@ void DrawBoardFull(const Board& board)
 }
 
 // デバッグ用：X方向にオフセットして盤面全体を描画する
-void DrawBoardDebug(int ofsx, const Board& board)
+void DrawBoardDebug(int offsetX, const Board& board)
 {
     for (int y = 0; y < HEIGHT; ++y)
     {
         for (int x = 0; x < WIDTH; ++x)
         {
-            DrawBlock(x + ofsx, y, board.GetColor(x, y));
+            DrawBlock(x + offsetX, y, board.GetColor(x, y));
         }
     }
 }

@@ -11,7 +11,7 @@ int CalcBoardX(int ix);
 int CalcBoardY(int iy);
 
 // 画面単位の描画
-void ClearScreen();
+void ClearScreen(std::uint16_t color);
 void DrawTitle();
 void DrawGameOver();
 void DrawGameClear();
@@ -27,7 +27,7 @@ void DrawBlock(int ix, int iy, BlockColor color);
 void DrawText(const char* text, int x, int y, std::uint16_t color, std::uint16_t backColor, int size);
 
 // デバッグ描画
-void DrawBoardDebug(int ofsx, const Board& board);
+void DrawBoardDebug(int offsetX, const Board& board);
 
 
 
