@@ -127,7 +127,7 @@ int main(int, char* [])
             frameCountSystemTimeMs = systemTimeMs;
         }
 
-        count++;
+        ++count;
 
         gameManager.Execute(systemTimeMs, held);
 

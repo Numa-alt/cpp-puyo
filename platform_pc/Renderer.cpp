@@ -203,6 +203,7 @@ void DrawPlaying(SDL_Renderer* renderer, const GameManager& gameManager)
         DrawString(renderer, x, y + FONT_SIZE, str, 1, 0xFFFFFFFF, false);
     }
 
+    //一時停止
     if (gameManager.IsPause())
     {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0x80);

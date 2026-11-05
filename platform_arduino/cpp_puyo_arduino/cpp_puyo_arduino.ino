@@ -14,6 +14,8 @@ PlayState gPlayStateBefore = PlayState::Result;
 Board gBoardBefore{};
 FallingPair gFallingPairBefore{};
 
+bool gIsDrawPause = false;
+
 Adafruit_seesaw ss;
 
 constexpr int TFT_CS = 10;
@@ -28,8 +30,8 @@ Adafruit_ST7789 tft(TFT_CS, TFT_DC, TFT_RST);
 #define BUTTON_B 1
 #define BUTTON_SELECT 0
 #define BUTTON_START 16
-std::uint32_t button_mask = (1UL << BUTTON_X) | (1UL << BUTTON_Y) | (1UL << BUTTON_START) |
-(1UL << BUTTON_A) | (1UL << BUTTON_B) | (1UL << BUTTON_SELECT);
+std::uint32_t button_mask = (1UL << BUTTON_X) | (1UL << BUTTON_Y) | (1UL << BUTTON_START) | (1UL << BUTTON_A) | (1UL << BUTTON_B) | (1UL << BUTTON_SELECT);
+
 #define BIT(_x) (1UL<<(_x))
 
 
@@ -142,6 +144,94 @@ std::uint32_t GetHeld()
     return held;
 }
 
+void DrawPlaying()
+{
+    if (gameManager.GetPlayState() != gPlayStateBefore)
+    {
+        if (gameManager.GetPlayState() == PlayState::Control) {
+            gBoardBefore = gameManager.GetBoard();
+        }
+    }
+
+    //targetに今回描画したい盤面を構築
+    Board target{};
+    //現在の盤面
+    target = gameManager.GetBoard();
+
+    //操作中のブロック
+    auto fp = gameManager.GetFallingPair();
+    if (fp.GetColor(0) != BlockColor::Empty || fp.GetColor(1) != BlockColor::Empty)
+    {
+        target.PutOne(fp.GetX(), fp.GetY(), fp.GetColor(0));
+        target.PutOne(fp.GetPairX(), fp.GetPairY(), fp.GetColor(1));
+    }
+
+    //targetと前回のboardに差異があれば反映
+    DrawBoard(target, gBoardBefore);
+    gBoardBefore = target;
+
+    //Next
+    DrawNextPair(120, 50, gameManager.GetNextPair());
+
+    //Total
+    DrawTotal(8, 24, gameManager.GetTotalEraseBlockCount());
+
+    //Score
+    DrawScore(8, 2, gameManager.GetScore());
+
+    if (gameManager.IsPause())
+    {
+        if (!gIsDrawPause)
+        {
+            gIsDrawPause = true;
+            DrawPause(16, 100);
+        }
+    }
+    else
+    {
+        if (gIsDrawPause)
+        {
+            gIsDrawPause = false;
+        }
+    }
+
+    if (gameManager.GetPlayState() != PlayState::Control)
+    {
+        gBoardBefore = gameManager.GetBoard();
+    }
+    gPlayStateBefore = gameManager.GetPlayState();
+
+    //GameEvent処理
+    {
+        while (!gameManager.IsGameEventEmpty())
+        {
+            auto ge = gameManager.PopGameEvent();
+            switch (ge.GetType())
+            {
+            case GameEventType::Chain:
+                {
+                    int x = CalcBoardX(ge.GetX());
+                    int y = CalcBoardY(ge.GetY());
+                    // std::unique_ptr<EffectChain> effectChain = std::make_unique<EffectChain>(x, y, ChainEffectDispTimeMs, systemTimeMs, ge.mChainCount);
+                    // effectManager.AddEffect(std::move(effectChain));
+                    break;
+                }
+            case GameEventType::BlockErased:
+                {
+                    // int x = CalcBoardX(ge.mX) + BlockSize / 2;
+                    // int y = CalcBoardY(ge.mY) + BlockSize / 2;
+                    // std::unique_ptr<EffectBlockErase> effectEraseBlock = std::make_unique<EffectBlockErase>(x, y, ge.mBlockColor, BlockEraseEffectTimeMs, systemTimeMs);
+                    // effectManager.AddEffect(std::move(effectEraseBlock));
+                    break;
+                }
+            case GameEventType::GameOver:
+                {
+                    break;
+                }
+            }
+        }
+    }
+}
 
 void loop()
 {
@@ -151,103 +241,30 @@ void loop()
 
     gameManager.Execute(now, held);
 
-    if (gameManager.GetState() != gOldGameState) {
+    if (gameManager.GetState() != gOldGameState)
+    {
         gOldGameState = gameManager.GetState();
         ClearScreen();
         if (gameManager.GetState() == GameState::Playing)
         {
             gBoardBefore.Fill(BlockColor::Red);
+            gIsDrawPause = false;
         }
     }
 
     switch (gameManager.GetState())
     {
     case GameState::Title:
-        {
-            DrawTitle();
-            break;
-        }
+        DrawTitle();
+        break;
     case GameState::Playing:
-        {
-            if (gameManager.GetPlayState() != gPlayStateBefore)
-            {
-                if (gameManager.GetPlayState() == PlayState::Control) {
-                    gBoardBefore = gameManager.GetBoard();
-                }
-            }
-
-            //targetに今回描画したい盤面を構築
-            Board target{};
-            //現在の盤面
-            target = gameManager.GetBoard();
-
-            //操作中のブロック
-            auto fp = gameManager.GetFallingPair();
-            if (fp.GetColor(0) != BlockColor::Empty || fp.GetColor(1) != BlockColor::Empty)
-            {
-                target.PutOne(fp.GetX(), fp.GetY(), fp.GetColor(0));
-                target.PutOne(fp.GetPairX(), fp.GetPairY(), fp.GetColor(1));
-            }
-
-            //targetと前回のboardに差異があれば反映
-            DrawBoard(target, gBoardBefore);
-            gBoardBefore = target;
-
-            //Next
-            DrawNextPair(120, 50, gameManager.GetNextPair());
-
-            //Total
-            DrawTotal(8, 24, gameManager.GetTotalEraseBlockCount());
-
-            //Score
-            DrawScore(8, 2, gameManager.GetScore());
-
-            if (gameManager.GetPlayState() != PlayState::Control)
-            {
-                gBoardBefore = gameManager.GetBoard();
-            }
-            gPlayStateBefore = gameManager.GetPlayState();
-
-            //GameEvent処理
-            {
-                while (!gameManager.IsGameEventEmpty()) {
-                    auto ge = gameManager.PopGameEvent();
-                    switch (ge.GetType()) {
-                    case GameEventType::Chain:
-                        {
-                            int x = CalcBoardX(ge.GetX());
-                            int y = CalcBoardY(ge.GetY());
-                            // std::unique_ptr<EffectChain> effectChain = std::make_unique<EffectChain>(x, y, ChainEffectDispTimeMs, systemTimeMs, ge.mChainCount);
-                            // effectManager.AddEffect(std::move(effectChain));
-                            break;
-                        }
-                    case GameEventType::BlockErased:
-                        {
-                            // int x = CalcBoardX(ge.mX) + BlockSize / 2;
-                            // int y = CalcBoardY(ge.mY) + BlockSize / 2;
-                            // std::unique_ptr<EffectBlockErase> effectEraseBlock = std::make_unique<EffectBlockErase>(x, y, ge.mBlockColor, BlockEraseEffectTimeMs, systemTimeMs);
-                            // effectManager.AddEffect(std::move(effectEraseBlock));
-                            break;
-                        }
-                    case GameEventType::GameOver:
-                        {
-                            break;
-                        }
-                    }
-                }
-            }
-
-            break;
-        }
+        DrawPlaying();
+        break;
     case GameState::GameOver:
-        {
-            DrawGameOver();
-            break;
-        }
+        DrawGameOver();
+        break;
     case GameState::GameClear:
-        {
-            DrawGameClear();
-            break;
-        }
+        DrawGameClear();
+        break;
     }
 }

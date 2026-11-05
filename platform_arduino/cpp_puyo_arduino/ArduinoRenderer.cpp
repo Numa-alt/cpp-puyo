@@ -213,3 +213,15 @@ void DrawScore(int x, int y, std::uint32_t score)
     tft.setTextSize(size);
     tft.print(scoreText.c_str());
 }
+
+void DrawPause(int x, int y)
+{
+    std::uint16_t color = 0x7FFF;
+    std::uint16_t backColor = 0x0000;
+    int size = 1;
+
+    tft.setCursor(x, y);
+    tft.setTextColor(color, backColor);
+    tft.setTextSize(size);
+    tft.print("PAUSE");
+}

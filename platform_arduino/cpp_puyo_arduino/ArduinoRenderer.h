@@ -21,6 +21,7 @@ void DrawFallingPair(const FallingPair& pair);
 void DrawNextPair(int x, int y, const FallingPair& pair);
 void DrawTotal(int x, int y, std::uint32_t totalEraseBlockCount);
 void DrawScore(int x, int y, std::uint32_t score);
+void DrawPause(int x, int y);
 
 void DrawBlock(int ix, int iy, BlockColor color);
 
