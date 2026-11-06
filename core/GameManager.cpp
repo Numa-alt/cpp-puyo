@@ -43,6 +43,7 @@ void GameManager::Title()
         SetState(GameState::Playing);
     }
 }
+
 // ゲーム中
 void GameManager::Playing(std::uint32_t systemTimeMs)
 {
@@ -63,6 +64,7 @@ void GameManager::Playing(std::uint32_t systemTimeMs)
         break;
     }
 }
+
 // ゲームオーバー
 void GameManager::GameOver()
 {
@@ -72,6 +74,7 @@ void GameManager::GameOver()
         SetState(GameState::Title);
     }
 }
+
 // ゲームクリア
 void GameManager::GameClear()
 {
@@ -91,12 +94,13 @@ const FallingPair& GameManager::GetFallingPair() const
 {
     return mPlayingManager.GetFallingPair();
 }
+
 const FallingPair& GameManager::GetNextPair() const
 {
     return mPlayingManager.GetNextPair();
 }
 
-PlayState GameManager::GetPlayState()const
+PlayState GameManager::GetPlayState() const
 {
     return mPlayingManager.GetState();
 }
@@ -106,7 +110,7 @@ void GameManager::SetRandomSeed(std::uint32_t randomSeed)
     mPlayingManager.SetRandomSeed(randomSeed);
 }
 
-std::uint32_t GameManager::GetRandomSeed()const
+std::uint32_t GameManager::GetRandomSeed() const
 {
     return mPlayingManager.GetRandomSeed();
 }
@@ -115,28 +119,32 @@ std::uint32_t GameManager::GetChainCount() const
 {
     return mPlayingManager.GetChainCount();
 }
+
 std::uint32_t GameManager::GetScore() const
 {
     return mPlayingManager.GetScore();
 }
 
-bool GameManager::IsGameEventEmpty()const
+bool GameManager::IsGameEventEmpty() const
 {
     return mGameEventManager.IsEmpty();
 }
+
 GameEvent GameManager::PopGameEvent()
 {
     return mGameEventManager.Pop();
 }
 
-std::uint32_t GameManager::GetAutoFallIntervalMs()const
+std::uint32_t GameManager::GetAutoFallIntervalMs() const
 {
     return mPlayingManager.GetAutoFallIntervalMs();
 }
-std::uint32_t GameManager::GetTotalEraseBlockCount()const
+
+std::uint32_t GameManager::GetTotalEraseBlockCount() const
 {
     return mPlayingManager.GetTotalEraseBlockCount();
 }
+
 GameState GameManager::GetState() const
 {
     return mGameState;

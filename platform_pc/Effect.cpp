@@ -10,12 +10,12 @@
 #include "PcConfig.h"
 
 
-std::uint32_t Effect::GetLifeTimeMs()const
+std::uint32_t Effect::GetLifeTimeMs() const
 {
     return mLifeTimeMs;
 }
 
-std::uint32_t Effect::GetStartTimeMs()const
+std::uint32_t Effect::GetStartTimeMs() const
 {
     return mStartTimeMs;
 }

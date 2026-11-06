@@ -100,7 +100,6 @@ void setup()
 
     gTft.fillScreen(gGameBgColor);
 
-
     std::uint32_t seed =
         micros()
         ^ (static_cast<std::uint32_t>(gSeesaw.analogRead(kJoystickXPin)) << 10)

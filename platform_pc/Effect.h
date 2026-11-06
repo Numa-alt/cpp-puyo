@@ -72,7 +72,7 @@ public:
     );
 
     void Execute(std::uint32_t systemTimeMs) override;
-    void Draw(SDL_Renderer* renderer)const override;
+    void Draw(SDL_Renderer* renderer) const override;
 };
 
 // 連鎖数エフェクト
