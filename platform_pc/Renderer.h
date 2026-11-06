@@ -39,7 +39,7 @@ void DrawClear(SDL_Renderer* renderer);
 void DrawScreen(SDL_Renderer* renderer, const GameManager& gameManager, const EffectManager& effectManager);
 
 int CalcBoardX(int ix);
-int CalcBoardY(int ix);
+int CalcBoardY(int iy);
 
 
 

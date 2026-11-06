@@ -1,4 +1,5 @@
 #pragma once
+
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -14,8 +15,8 @@ private:
     std::uint32_t mLifeTimeMs = 0;
     std::uint32_t mStartTimeMs = 0;
     bool mIsPaused = false;
-    std::uint32_t mPauseTimeMs = 0;
     float mRate = 0.0f;
+
 public:
     Effect(std::uint32_t lifeTimeMs, std::uint32_t startTimeMs) :mLifeTimeMs(lifeTimeMs), mStartTimeMs(startTimeMs)
     {
@@ -32,10 +33,8 @@ public:
 
     float CalcRate(std::uint32_t systemTimeMs) const;
 
-    bool GetPause()const;
-    void SetPause(bool pause);
-    void SetPauseTimeMs(std::uint32_t pauseTimeMs);
-    std::uint32_t GetPauseTimeMs()const;
+    bool IsPaused()const;
+    void SetPaused(bool pause);
     void SetRate(float rate);
     float GetRate() const;
 };
@@ -52,7 +51,7 @@ public:
 
     void Draw(SDL_Renderer* renderer) const;
 
-    std::size_t GetCount() const;
+    // std::size_t GetCount() const;
 };
 
 // ブロック消去エフェクト
@@ -87,7 +86,7 @@ private:
     int mOffsetY = 0;
     std::uint32_t mAlpha = 255;
     std::uint32_t mColor = 0xFFFFFF;
-    std::uint32_t mChainNum = 0;
+    std::uint32_t mChainCount = 0;
 public:
     EffectChain(int x, int y, std::uint32_t lifeTimeMs, std::uint32_t startTimeMs, std::uint32_t chainNum);
     void Execute(std::uint32_t systemTimeMs) override;

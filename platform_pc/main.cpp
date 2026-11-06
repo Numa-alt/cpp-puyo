@@ -2,10 +2,10 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
-#include <sstream>
+// #include <sstream>
 #include <string>
 
-#include <cassert>
+// #include <cassert>
 
 #include <SDL.h>
 
@@ -27,8 +27,8 @@ int main(int, char* [])
         "cpp-puyo",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        WINDOW_WIDTH,
-        WINDOW_HEIGHT,
+        WindowWidth,
+        WindowHeight,
         SDL_WINDOW_SHOWN
     );
     if (window == nullptr)
@@ -64,9 +64,9 @@ int main(int, char* [])
 
     bool running = true;
 
-    std::uint32_t frameCount = 0;
-    std::uint32_t count = 0;
-    std::uint32_t frameCountSystemTimeMs = 0;
+    std::uint32_t fps = 0;
+    std::uint32_t framesThisSecond = 0;
+    std::uint32_t lastFpsUpdateTimeMs = 0;
 
     while (true) {
 
@@ -88,22 +88,22 @@ int main(int, char* [])
         }
 
         //今押されているか？
-        std::uint32_t held = 0;
+        std::uint32_t heldButtons = 0;
         const Uint8* keyState = SDL_GetKeyboardState(nullptr);
         if (keyState[SDL_SCANCODE_LEFT]) {
-            held |= ButtonBit(Button::Left);
+            heldButtons |= ButtonBit(Button::Left);
         }
         if (keyState[SDL_SCANCODE_RIGHT]) {
-            held |= ButtonBit(Button::Right);
+            heldButtons |= ButtonBit(Button::Right);
         }
         if (keyState[SDL_SCANCODE_DOWN]) {
-            held |= ButtonBit(Button::Down);
+            heldButtons |= ButtonBit(Button::Down);
         }
         if (keyState[SDL_SCANCODE_UP]) {
-            held |= ButtonBit(Button::Up);
+            heldButtons |= ButtonBit(Button::Up);
         }
         if (keyState[SDL_SCANCODE_SPACE]) {
-            held |= ButtonBit(Button::Rotate);
+            heldButtons |= ButtonBit(Button::Rotate);
         }
 
         if (keyState[SDL_SCANCODE_ESCAPE]) {
@@ -114,41 +114,41 @@ int main(int, char* [])
 
         //FPS
 #ifdef DEBUG_OVERLAY
-        DrawFps(renderer, frameCount);
+        DrawFps(renderer, fps);
 #endif
 
         auto now = std::chrono::steady_clock::now();
 
         std::uint32_t systemTimeMs = static_cast<std::uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count());
 
-        if ((systemTimeMs - frameCountSystemTimeMs) >= 1000) {
-            frameCount = count;
-            count = 0;
-            frameCountSystemTimeMs = systemTimeMs;
+        if ((systemTimeMs - lastFpsUpdateTimeMs) >= 1000) {
+            fps = framesThisSecond;
+            framesThisSecond = 0;
+            lastFpsUpdateTimeMs = systemTimeMs;
         }
 
-        ++count;
+        ++framesThisSecond;
 
-        gameManager.Execute(systemTimeMs, held);
+        gameManager.Execute(systemTimeMs, heldButtons);
 
         //GameEvent処理
         {
             while (!gameManager.IsGameEventEmpty()) {
-                auto ge = gameManager.PopGameEvent();
-                switch (ge.GetType()) {
+                auto gameEvent = gameManager.PopGameEvent();
+                switch (gameEvent.GetType()) {
                 case GameEventType::Chain:
                     {
-                        int x = CalcBoardX(ge.GetX());
-                        int y = CalcBoardY(ge.GetY());
-                        std::unique_ptr<EffectChain> effectChain = std::make_unique<EffectChain>(x, y, ChainEffectDispTimeMs, systemTimeMs, ge.GetValue());
+                        int x = CalcBoardX(gameEvent.GetX());
+                        int y = CalcBoardY(gameEvent.GetY());
+                        std::unique_ptr<EffectChain> effectChain = std::make_unique<EffectChain>(x, y, ChainEffectDisplayTimeMs, systemTimeMs, gameEvent.GetValue());
                         effectManager.AddEffect(std::move(effectChain));
                         break;
                     }
                 case GameEventType::BlockErased:
                     {
-                        int x = CalcBoardX(ge.GetX()) + BlockSize / 2;
-                        int y = CalcBoardY(ge.GetY()) + BlockSize / 2;
-                        std::unique_ptr<EffectBlockErase> effectEraseBlock = std::make_unique<EffectBlockErase>(x, y, static_cast<BlockColor>(ge.GetValue()), BlockEraseEffectTimeMs, systemTimeMs);
+                        int x = CalcBoardX(gameEvent.GetX()) + BlockSize / 2;
+                        int y = CalcBoardY(gameEvent.GetY()) + BlockSize / 2;
+                        std::unique_ptr<EffectBlockErase> effectEraseBlock = std::make_unique<EffectBlockErase>(x, y, static_cast<BlockColor>(gameEvent.GetValue()), BlockEraseEffectTimeMs, systemTimeMs);
                         effectManager.AddEffect(std::move(effectEraseBlock));
                         break;
                     }
