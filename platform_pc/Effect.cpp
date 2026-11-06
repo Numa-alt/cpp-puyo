@@ -5,8 +5,6 @@
 #include <array>
 #include <string>
 
-
-#include "GameConfig.h"
 #include "Renderer.h"
 
 #include "PcConfig.h"
@@ -16,16 +14,18 @@ std::uint32_t Effect::GetLifeTimeMs()const
 {
     return mLifeTimeMs;
 }
+
 std::uint32_t Effect::GetStartTimeMs()const
 {
     return mStartTimeMs;
 }
 
-// Pause開始時の進行率を保持し、開始時刻を補正してエフェクトの進行を停止する
+// エフェクト開始からの経過率を0.0〜1.0で返す
 float Effect::CalcRate(std::uint32_t systemTimeMs) const
 {
-    float nowMs = static_cast<float>(systemTimeMs) - static_cast<float>(mStartTimeMs);
-    float rate = nowMs / static_cast<float>(mLifeTimeMs);
+    std::uint32_t elapsedMs = systemTimeMs - mStartTimeMs;
+
+    float rate = static_cast<float>(elapsedMs) / static_cast<float>(mLifeTimeMs);
     if (rate < 0.0f) {
         return 0.0f;
     }
@@ -34,30 +34,27 @@ float Effect::CalcRate(std::uint32_t systemTimeMs) const
     }
     return rate;
 }
-bool Effect::IsPaused()const
+
+bool Effect::IsPaused() const
 {
     return mIsPaused;
 }
+
 void Effect::SetPaused(bool pause)
 {
     mIsPaused = pause;
 }
-// void Effect::SetPauseTimeMs(std::uint32_t pauseTimeMs)
-// {
-//     mPauseTimeMs = pauseTimeMs;
-// }
-// std::uint32_t Effect::GetPauseTimeMs()const
-// {
-//     return mPauseTimeMs;
-// }
-void Effect::SetRate(float rate)
+
+void Effect::SetPauseRate(float rate)
 {
-    mRate = rate;
+    mPauseRate = rate;
 }
-float Effect::GetRate() const
+
+float Effect::GetPauseRate() const
 {
-    return mRate;
+    return mPauseRate;
 }
+
 void Effect::SetStartTimeMs(std::uint32_t startTimeMs)
 {
     mStartTimeMs = startTimeMs;
@@ -76,16 +73,15 @@ void EffectManager::Execute(std::uint32_t systemTimeMs, bool isPause)
         {
             if (e->IsPaused())
             {
-                float rate = e->GetRate();
+                float rate = e->GetPauseRate();
                 std::uint32_t newStartTimeMs = static_cast<std::uint32_t>(systemTimeMs - e->GetLifeTimeMs() * rate);
                 e->SetStartTimeMs(newStartTimeMs);
             }
             else
             {
                 e->SetPaused(true);
-                // e->SetPauseTimeMs(systemTimeMs);
                 float rate = e->CalcRate(systemTimeMs);
-                e->SetRate(rate);
+                e->SetPauseRate(rate);
             }
         }
         else {
@@ -100,7 +96,7 @@ void EffectManager::Execute(std::uint32_t systemTimeMs, bool isPause)
 
     //終了処理
     if (!isPause) {
-        auto it = std::remove_if(mEffects.begin(), mEffects.end(), [systemTimeMs](std::unique_ptr<Effect>& e)
+        auto it = std::remove_if(mEffects.begin(), mEffects.end(), [systemTimeMs](const std::unique_ptr<Effect>& e)
             {
                 return (systemTimeMs - e->GetStartTimeMs()) > e->GetLifeTimeMs();
             });
@@ -109,18 +105,13 @@ void EffectManager::Execute(std::uint32_t systemTimeMs, bool isPause)
     }
 }
 
-void EffectManager::Draw(SDL_Renderer* renderer)const
+void EffectManager::Draw(SDL_Renderer* renderer) const
 {
     for (const auto& e : mEffects)
     {
         e->Draw(renderer);
     }
 }
-
-// std::size_t EffectManager::GetCount() const
-// {
-//     return mEffects.size();
-// }
 
 EffectBlockErase::EffectBlockErase(
     int x,
@@ -149,7 +140,7 @@ void EffectBlockErase::Execute(std::uint32_t systemTimeMs)
     mSize = BlockSize - static_cast<int>(static_cast<float>(BlockSize) * rate);
 }
 
-void EffectBlockErase::Draw(SDL_Renderer* renderer)
+void EffectBlockErase::Draw(SDL_Renderer* renderer) const
 {
     SDL_SetRenderDrawColor(renderer, (mColor >> 16) & 0xFF, (mColor >> 8) & 0xFF, mColor & 0xFF, static_cast<std::uint8_t>(mAlpha));
     int x = mX - mSize / 2;
@@ -201,7 +192,7 @@ void EffectChain::Execute(std::uint32_t systemTimeMs)
     mColor = colorTbl[index];
 
 }
-void EffectChain::Draw(SDL_Renderer* renderer)
+void EffectChain::Draw(SDL_Renderer* renderer) const
 {
     std::string str = std::to_string(mChainCount) + " CHAIN";
     DrawString(renderer, mX, mY + mOffsetY, str, 1, ((mAlpha & 0xFF) << 24) | mColor, false);

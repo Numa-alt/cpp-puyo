@@ -10,10 +10,8 @@
 #include "GameManager.h"
 #include "Effect.h"
 
-#define DEBUG_OVERLAY
-
 #ifdef DEBUG_OVERLAY
-void DrawFps(SDL_Renderer* renderer, std::uint32_t frameCount);
+void DrawFps(SDL_Renderer* renderer, std::uint32_t fps);
 #endif
 
 void DrawChar(SDL_Renderer* renderer, int x, int y, char c, int scale, std::uint32_t color);
@@ -34,7 +32,7 @@ void DrawPlaying(SDL_Renderer* renderer, const GameManager& gameManager);
 
 void DrawGameOver(SDL_Renderer* renderer);
 
-void DrawClear(SDL_Renderer* renderer);
+void DrawGameClear(SDL_Renderer* renderer);
 
 void DrawScreen(SDL_Renderer* renderer, const GameManager& gameManager, const EffectManager& effectManager);
 

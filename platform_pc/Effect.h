@@ -15,7 +15,7 @@ private:
     std::uint32_t mLifeTimeMs = 0;
     std::uint32_t mStartTimeMs = 0;
     bool mIsPaused = false;
-    float mRate = 0.0f;
+    float mPauseRate = 0.0f;
 
 public:
     Effect(std::uint32_t lifeTimeMs, std::uint32_t startTimeMs) :mLifeTimeMs(lifeTimeMs), mStartTimeMs(startTimeMs)
@@ -25,7 +25,7 @@ public:
     virtual ~Effect() = default;
 
     virtual void Execute(std::uint32_t) = 0;
-    virtual void Draw(SDL_Renderer*) = 0;
+    virtual void Draw(SDL_Renderer*) const = 0;
 
     std::uint32_t GetLifeTimeMs() const;
     std::uint32_t GetStartTimeMs() const;
@@ -35,8 +35,8 @@ public:
 
     bool IsPaused()const;
     void SetPaused(bool pause);
-    void SetRate(float rate);
-    float GetRate() const;
+    void SetPauseRate(float rate);
+    float GetPauseRate() const;
 };
 
 
@@ -50,8 +50,6 @@ public:
     void Execute(std::uint32_t systemTimeMs, bool isPause);
 
     void Draw(SDL_Renderer* renderer) const;
-
-    // std::size_t GetCount() const;
 };
 
 // ブロック消去エフェクト
@@ -74,7 +72,7 @@ public:
     );
 
     void Execute(std::uint32_t systemTimeMs) override;
-    void Draw(SDL_Renderer* renderer) override;
+    void Draw(SDL_Renderer* renderer)const override;
 };
 
 // 連鎖数エフェクト
@@ -90,5 +88,5 @@ private:
 public:
     EffectChain(int x, int y, std::uint32_t lifeTimeMs, std::uint32_t startTimeMs, std::uint32_t chainNum);
     void Execute(std::uint32_t systemTimeMs) override;
-    void Draw(SDL_Renderer* renderer) override;
+    void Draw(SDL_Renderer* renderer) const override;
 };

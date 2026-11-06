@@ -10,10 +10,10 @@
 
 
 #ifdef DEBUG_OVERLAY
-void DrawFps(SDL_Renderer* renderer, std::uint32_t frameCount)
+void DrawFps(SDL_Renderer* renderer, std::uint32_t fps)
 {
     std::ostringstream oss;
-    oss << "FPS " << frameCount;
+    oss << "FPS " << fps;
     std::string str = oss.str();
     DrawString(renderer, 240, 2, str, 1, 0xFFFFFFFF, false);
 }
@@ -73,7 +73,7 @@ void DrawString(SDL_Renderer* renderer, int x, int y, const std::string& str, in
         for (std::size_t i = 0; i < strUpper.size(); ++i)
         {
             char c = strUpper[i];
-            DrawChar(renderer, x + scale * 8 * static_cast<int>(i) + scale, y + scale, c, scale, alpha | 0x00000000);
+            DrawChar(renderer, x + scale * 8 * static_cast<int>(i) + scale, y + scale, c, scale, alpha);
         }
     }
 
@@ -127,13 +127,7 @@ void DrawFallingPair(SDL_Renderer* renderer, const FallingPair& fallingPair)
     //相方
     ix = fallingPair.GetPartnerX();
     iy = fallingPair.GetPartnerY();
-    // switch (fallingPair.GetDirection())
-    // {
-    // case Direction::Up: ++iy; break;
-    // case Direction::Down: --iy; break;
-    // case Direction::Left: --ix; break;
-    // case Direction::Right: ++ix; break;
-    // }
+
     BlockColor pairBlockColor = fallingPair.GetColor(1);
     DrawBlock(renderer, ix, iy, pairBlockColor, 0xFF);
 }
@@ -246,7 +240,7 @@ void DrawGameOver(SDL_Renderer* renderer)
 
 }
 
-void DrawClear(SDL_Renderer* renderer)
+void DrawGameClear(SDL_Renderer* renderer)
 {
     std::string str = "CLEAR";
     int x = WindowWidth / 2 - FontSize * static_cast<int>(str.size()) / 2;
@@ -275,7 +269,7 @@ void DrawScreen(SDL_Renderer* renderer, const GameManager& gameManager, const Ef
         }
     case GameState::GameClear:
         {
-            DrawClear(renderer);
+            DrawGameClear(renderer);
             break;
         }
     }

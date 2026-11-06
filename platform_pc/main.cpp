@@ -2,17 +2,13 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
-// #include <sstream>
 #include <string>
-
-// #include <cassert>
 
 #include <SDL.h>
 
 #include "GameManager.h"
 #include "Effect.h"
 #include "Renderer.h"
-#include "GameConfig.h"
 #include "PcConfig.h"
 
 int main(int, char* [])
@@ -132,30 +128,30 @@ int main(int, char* [])
         gameManager.Execute(systemTimeMs, heldButtons);
 
         //GameEvent処理
+        while (!gameManager.IsGameEventEmpty())
         {
-            while (!gameManager.IsGameEventEmpty()) {
-                auto gameEvent = gameManager.PopGameEvent();
-                switch (gameEvent.GetType()) {
-                case GameEventType::Chain:
-                    {
-                        int x = CalcBoardX(gameEvent.GetX());
-                        int y = CalcBoardY(gameEvent.GetY());
-                        std::unique_ptr<EffectChain> effectChain = std::make_unique<EffectChain>(x, y, ChainEffectDisplayTimeMs, systemTimeMs, gameEvent.GetValue());
-                        effectManager.AddEffect(std::move(effectChain));
-                        break;
-                    }
-                case GameEventType::BlockErased:
-                    {
-                        int x = CalcBoardX(gameEvent.GetX()) + BlockSize / 2;
-                        int y = CalcBoardY(gameEvent.GetY()) + BlockSize / 2;
-                        std::unique_ptr<EffectBlockErase> effectEraseBlock = std::make_unique<EffectBlockErase>(x, y, static_cast<BlockColor>(gameEvent.GetValue()), BlockEraseEffectTimeMs, systemTimeMs);
-                        effectManager.AddEffect(std::move(effectEraseBlock));
-                        break;
-                    }
-                case GameEventType::GameOver:
-                    {
-                        break;
-                    }
+            auto gameEvent = gameManager.PopGameEvent();
+            switch (gameEvent.GetType())
+            {
+            case GameEventType::Chain:
+                {
+                    int x = CalcBoardX(gameEvent.GetX());
+                    int y = CalcBoardY(gameEvent.GetY());
+                    std::unique_ptr<EffectChain> effectChain = std::make_unique<EffectChain>(x, y, ChainEffectDisplayTimeMs, systemTimeMs, gameEvent.GetValue());
+                    effectManager.AddEffect(std::move(effectChain));
+                    break;
+                }
+            case GameEventType::BlockErased:
+                {
+                    int x = CalcBoardX(gameEvent.GetX()) + BlockSize / 2;
+                    int y = CalcBoardY(gameEvent.GetY()) + BlockSize / 2;
+                    std::unique_ptr<EffectBlockErase> effectEraseBlock = std::make_unique<EffectBlockErase>(x, y, static_cast<BlockColor>(gameEvent.GetValue()), BlockEraseEffectTimeMs, systemTimeMs);
+                    effectManager.AddEffect(std::move(effectEraseBlock));
+                    break;
+                }
+            case GameEventType::GameOver:
+                {
+                    break;
                 }
             }
         }

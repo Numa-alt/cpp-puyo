@@ -201,7 +201,8 @@ cpp-puyo/
 ├─ tests/
 │  ├─ test_board.cpp
 │  ├─ test_game_event.cpp
-│  └─ test_input.cpp
+│  ├─ test_input.cpp
+│  └─ test_playing_manager.cpp
 │
 └─ CMakeLists.txt
 ```
@@ -217,21 +218,106 @@ cpp-puyo/
 | `Board` | 盤面、配置、消去判定、落下処理 |
 | `FallingPair` | 操作中の2個1組のブロック |
 | `InputManager` | Held / Pressed / Released / Repeat の生成 |
+| `GameEventManager` | ゲームイベントを固定長リングバッファで保持・管理 |
 | `GameEvent` | coreからプラットフォーム側へのイベント通知 |
 
-`PlayingManager` では主に以下の状態を管理しています。ゲーム終了時は `Result` へ遷移します。
+### クラス図
+
+主要クラス間の所有関係と依存関係を簡略化して示します。  
+すべてのメンバや関数を列挙するのではなく、設計上の責務と関係が分かる範囲に絞っています。
+
+```mermaid
+classDiagram
+    class GameManager {
+        -GameState mGameState
+        -InputManager mInputManager
+        -PlayingManager mPlayingManager
+        -GameEventManager mGameEventManager
+        +Execute(systemTimeMs, held)
+        +GetState()
+        +GetBoard()
+        +GetFallingPair()
+        +GetNextPair()
+        +GetPlayState()
+        +GetScore()
+        +PopGameEvent()
+    }
+
+    class PlayingManager {
+        -FallingPair mFallingPair
+        -FallingPair mNextPair
+        -Board mBoard
+        -PlayState mState
+        -GameResult mGameResult
+        +Start(systemTimeMs, gameEventManager)
+        +Execute(input, systemTimeMs, gameEventManager)
+        +Spawn(gameEventManager)
+        +Control(input, gameEventManager)
+        +DropBlocks(gameEventManager)
+        +EraseCheck(gameEventManager)
+        +Erase(gameEventManager)
+        +Land(gameEventManager)
+    }
+
+    class Board {
+        +PutOne(x, y, color)
+        +GetColor(x, y)
+        +Reset()
+        +FindEraseBlocks()
+        +EraseBlocks()
+        +HasFloatingBlocks()
+        +DropFloatingBlocks()
+    }
+
+    class FallingPair
+
+    class InputManager {
+        +Execute(systemTimeMs, held)
+        +IsHeld(button)
+        +IsPressed(button)
+        +IsReleased(button)
+        +IsRepeat(button)
+    }
+
+    class GameEventManager {
+        +Push(...)
+        +Pop()
+        +IsEmpty()
+    }
+
+    GameManager *-- InputManager : 所有
+    GameManager *-- PlayingManager : 所有
+    GameManager *-- GameEventManager : 所有
+    PlayingManager *-- Board : 所有
+    PlayingManager *-- FallingPair : 操作中・次ブロック
+    PlayingManager ..> InputManager : 入力を参照
+    PlayingManager ..> GameEventManager : イベント通知
+```
+
+`*--` はメンバとして保持する所有関係、`..>` は引数などを通して利用する依存関係を表しています。
+
+### ゲーム状態遷移図
+
+`PlayingManager` の `PlayState` の遷移を示します。Pauseは独立したフラグで管理し、現在の `PlayState` を維持したままゲーム進行を停止するため、この図には状態として含めていません。
 
 ```mermaid
 stateDiagram-v2
     [*] --> Spawn
-    Spawn --> Control
-    Control --> EraseCheck: 接地
-    EraseCheck --> Spawn: 消去なし
-    EraseCheck --> Erase: 消去あり
-    Erase --> DropBlocks
-    DropBlocks --> EraseCheck
-    Control --> Result: Game Over
-    Spawn --> Result: Game Over
+
+    Spawn --> Control: 出現待ち完了
+    Spawn --> Result: 新しいブロックを配置できない
+
+    Control --> EraseCheck: 着地・浮きなし
+    Control --> DropBlocks: 着地・浮きあり
+
+    DropBlocks --> DropBlocks: まだ浮きあり
+    DropBlocks --> EraseCheck: 浮きなし
+
+    EraseCheck --> Erase: 消去対象あり
+    EraseCheck --> Spawn: 消去対象なし
+
+    Erase --> DropBlocks: 消去後に浮きあり
+    Erase --> Spawn: 消去後に浮きなし
 ```
 
 ---
@@ -441,7 +527,7 @@ CMake / CTestを利用し、現在は主に以下を確認しています。
 - 2回目以降のRepeat間隔
 - ボタンを離して再度入力した場合の状態
 
-### `GameEvent`
+### `GameEvent` / `GameEventManager`
 
 - イベント種別
 - X座標
@@ -449,6 +535,17 @@ CMake / CTestを利用し、現在は主に以下を確認しています。
 - value
 - 16bitパック後の値の復元
 - イベントキューへのPush / Pop
+- 実効容量73件までPushできること
+- 満杯時に74件目のPushを拒否すること
+- リングバッファのwrap-around後もFIFO順を維持すること
+
+### `PlayingManager`
+
+- Pause中の経過時間が自動落下に加算されないこと
+- Pause前の自動落下までの残り時間がResume後にも保持されること
+- `Spawn -> Control`
+- `Control -> EraseCheck`
+- `Control -> DropBlocks`
 
 ### テスト実行
 
@@ -456,7 +553,7 @@ Windowsの例：
 
 ```powershell
 cmake --build build-win
-ctest --test-dir build-win -C Debug
+ctest --test-dir build-win -C Debug --output-on-failure
 ```
 
 成功時：
@@ -515,15 +612,57 @@ PC版では `core` を独立したライブラリとしてビルドし、`platfo
 | ゲームパッド | STEMMA QT / Qwiic互換 seesaw ミニ I2Cゲームパッド | I2C / `0x50` |
 | 接続ケーブル | STEMMA QT / Qwiic JST SH 4ピン - ピンソケット変換ケーブル 150mm | I2C接続 |
 
-### LCD制御ピン
+### 配線
 
-| 信号 | Arduino UNO R4 Minima |
-|---|---:|
+#### LCD
+
+Waveshare 2インチ IPS LCD（240×320 / ST7789V/VW）をSPIで接続しています。
+
+| LCD信号 | Arduino UNO R4 Minima |
+|---|---|
+| VCC | 5V |
+| GND | GND |
+| DIN / MOSI | D11 |
+| CLK / SCK | D13 |
 | CS | D10 |
 | DC | D7 |
 | RST | D8 |
+| BL | D9 |
 
-LCDはSPIで接続し、描画には `Adafruit_ST7789` を使用しています。ゲームパッドはI2Cアドレス `0x50` からボタンおよびジョイスティックの状態を取得します。
+描画には `Adafruit_ST7789` を使用しています。
+
+#### ゲームパッド
+
+STEMMA QT / Qwiic互換のseesawミニI2Cゲームパッドを接続しています。
+
+| ゲームパッド信号 | Arduino UNO R4 Minima |
+|---|---|
+| VCC | 5V |
+| GND | GND |
+| SDA | SDA |
+| SCL | SCL |
+
+I2Cアドレスは `0x50` です。
+
+#### 配線図
+
+```text
+Arduino UNO R4 Minima
+│
+├─ 5V  ─────────────── LCD VCC
+├─ GND ─────────────── LCD GND
+├─ D11 (MOSI) ──────── LCD DIN
+├─ D13 (SCK) ───────── LCD CLK
+├─ D10 ─────────────── LCD CS
+├─ D7  ─────────────── LCD DC
+├─ D8  ─────────────── LCD RST
+├─ D9  ─────────────── LCD BL
+│
+├─ 5V  ─────────────── Gamepad VCC
+├─ GND ─────────────── Gamepad GND
+├─ SDA ─────────────── Gamepad SDA
+└─ SCL ─────────────── Gamepad SCL
+```
 
 ---
 
@@ -701,35 +840,18 @@ COM自動プレイでは、対戦機能ではなく、現在の盤面から置�
 ### Arduino版
 
 - RAM / Flash使用量の継続確認
-- Arduino向け文字列処理の見直し
+- 必要に応じたArduino向け処理の改善
 
 ### 自動テスト
 
-- `GameEventManager` のリングバッファ境界テスト
-- Pause時間管理のテスト
-- 状態遷移のテスト
-- 必要に応じた `PlayingManager` のテスト
+主要な `Board`、`InputManager`、`GameEventManager`、`PlayingManager` のテストは実装済みです。  
+今後は、仕様変更や不具合修正に応じて必要な回帰テストを追加します。
 
 ### メモリ最適化
 
 `enum class BlockColor` などの基底型を `std::uint8_t` に指定し、`sizeof(Board)` を312 bytesから96 bytesへ、当時の比較でグローバルRAMを6,800 bytesから6,360 bytesへ削減しました。
 
-今後もArduino IDEのVerify結果を確認しながら、盤面の内部表現などに追加の改善余地があるか検討します。
-
-ただし、可読性・保守性とのバランスを確認し、削減効果が小さい場合には過度なビットパックを行わない方針です。
-
-### 設計資料
-
-以下を追加予定です。
-
-- クラス図
-- ゲーム状態遷移図
-- PC / Arduino共通化構成図
-- Arduino配線図
-
-### ポートフォリオ資料
-
-- Arduino実機動作動画
+今後もArduino IDEのVerify結果を確認しながら、可読性・保守性とのバランスを見て追加の改善余地を検討します。削減効果が小さい場合には、過度なビットパックは行わない方針です。
 
 ---
 
